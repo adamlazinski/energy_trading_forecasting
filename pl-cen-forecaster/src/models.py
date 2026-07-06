@@ -65,14 +65,37 @@ def predict_baselines(train: pd.DataFrame, test: pd.DataFrame,
 
 
 class QuantileGBM:
-    def __init__(self, quantiles=QUANTILES, **overrides):
+    """Per-quantile LightGBM, optionally on a variance-stabilized target.
+
+    vst=True applies the asinh VST of Uniejewski & Weron (median/MAD
+    normalization, z = asinh((y - m)/s)) before fitting and inverts the
+    predicted quantiles exactly (quantiles are equivariant under monotone
+    transforms). Motivated by CEN's +/-45k PLN/MWh spikes; see
+    arXiv:2511.13603 for the volatile-regime evidence.
+    """
+
+    def __init__(self, quantiles=QUANTILES, vst: bool = False, **overrides):
         self.quantiles = quantiles
+        self.vst = vst
         self.params = {**LGB_PARAMS, **overrides}
         self.models: dict[float, lgb.LGBMRegressor] = {}
         self.feature_names: list[str] = []
+        self._m = 0.0
+        self._s = 1.0
+
+    def _fwd(self, y: pd.Series) -> pd.Series:
+        return np.arcsinh((y - self._m) / self._s)
+
+    def _inv(self, z: np.ndarray) -> np.ndarray:
+        return self._s * np.sinh(z) + self._m
 
     def fit(self, X: pd.DataFrame, y: pd.Series):
         self.feature_names = list(X.columns)
+        if self.vst:
+            self._m = float(y.median())
+            mad = float((y - self._m).abs().median())
+            self._s = max(1.4826 * mad, 1e-6)
+            y = self._fwd(y)
         for q in self.quantiles:
             m = lgb.LGBMRegressor(alpha=q, **self.params)
             m.fit(X, y)
@@ -83,6 +106,8 @@ class QuantileGBM:
         pred = pd.DataFrame(
             {q: self.models[q].predict(X[self.feature_names]) for q in self.quantiles},
             index=X.index)
+        if self.vst:
+            pred[:] = self._inv(pred.values)
         # rearrange to enforce monotone quantiles (Chernozhukov et al.)
         pred[:] = np.sort(pred.values, axis=1)
         return pred

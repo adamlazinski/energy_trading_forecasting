@@ -35,6 +35,11 @@ pse:
     reserve_req:    "zmb"            # procured balancing capacity per product/direction
     contracting:    "sk"             # KSE contracting state (sk_cost + D-1/D forecasts)
     co2:            "rcco2"          # CO2 settlement price (daily)
+    # --- Project B (BESS/ZPG activation model) ---
+    poeb_rbn:       "poeb-rbn"       # marginal accepted offer prices RBN (ofcg up / ofcd down / ofp)
+    poeb_rbb:       "poeb-rbb"       # same, RBN+RBB
+    picasso:        "zeb-rozl"       # ZEBpp + PICASSO aFRR platform prices (pzeb_afrrg/afrrd)
+    offer_ladder:   "oeb-bpkdbo"     # accepted offer ladder: price, power, direction, merit sort
 
 target:
   resource:  "imbalance"    # -> crb-rozl
