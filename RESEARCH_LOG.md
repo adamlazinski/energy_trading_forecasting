@@ -104,6 +104,18 @@ wash (68.57 vs 68.47) — kept only for the future LEAR benchmark.
   that late window. v1 (true marginals, full history) supersedes them.
 - PICASSO `pzeb_*` semantics still unverified (spread ≈ −461 vs domestic —
   flagged, not interpreted).
+- **v1 complete (full history 2024-06→2026-07, 70,368 periods, 0% null):**
+  net direction is up ~64% of periods except midday (~50/50, solar);
+  up-marginal median 518 (night) → 708 (evening ramp, P90 1100); down-
+  marginal midday median 23 with P10 −124 (paid to charge in solar hours).
+  Implied daily BESS spread (median up-marg − median down-marg): **median
+  512 PLN/MWh, P10 204** across 714 days — and the quarterly table is
+  *stable* through both reforms (up-marg p50 ~550–660 every quarter):
+  unlike the spread trades (F2/F6), this engine has not decayed. The v0
+  proxy curves materially understated the tail: at 600 PLN a discharge
+  offer activates 54.6% of evening-ramp periods (v0 said 29%).
+  Full tables: `reports/activation_v1_summary.txt`, curves in
+  `reports/activation_curves_v1.json`.
 
 ### F5. TGE's public results page is scrapable — the intraday leg is free
 The WAF rejects bare curl but passes a normal browser header set; the
