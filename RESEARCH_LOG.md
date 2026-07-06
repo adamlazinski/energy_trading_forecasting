@@ -35,6 +35,27 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F6. The *tradeable* intraday↔CEN spread: real edge through 2025, dead in 2026
+First run of `backtest_spread_ida.py` (walk-forward CEN quantiles × TGE
+legs, 49k joint periods Dec 2024–May 2026):
+- **IDA1 leg (gate-honest, D-1), cost 10 PLN/MWh:** 9,669 trades, hit
+  62.1%, +30 PLN/MWh per trade — but by quarter: +20k/+78k/+100k/+59k/+41k
+  (2024Q4–2025Q4) then **~0 in 2026Q1 and negative in 2026Q2**. At cost 20
+  the same shape holds (hit 60.3%, +26.5/trade, dead in 2026).
+- IDA2 similar but weaker; IDA3 (same-day PM) mostly noise; RDB VWAP proxy
+  agrees with IDA1's pattern.
+- mean(CEN − IDA1) ≈ −7 PLN/MWh: intraday trades at a small systematic
+  premium to eventual imbalance — a risk-premium carry, also fading.
+- Nuance vs F2: the DA↔CEN edge died *exactly at* the 2025-09-30 SDAC
+  reform; the IDA↔CEN edge survived it by one quarter and faded over
+  2026Q1–Q2 — consistent with the intraday market absorbing the balancing
+  signal gradually rather than by construction. Caveats: 2026Q2 is partial
+  (to May 10), and the walk-forward model refits only every 4 weeks.
+- Verdict: **the tradeable Project A edge is historical**. Its decay
+  timeline (vs the DA leg's instant death) strengthens the natural-
+  experiment write-up; a live strategy would need fresher features
+  (ENTSO-E actuals, IDA order flow) to have a claim to any remaining edge.
+
 ### F1. The CEN forecaster works and beats its anchors (2026-07)
 Quantile LightGBM (P10/25/50/75/90) + per-hour-block split-conformal
 recalibration, strict features, 8-week untouched holdout:

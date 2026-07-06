@@ -33,8 +33,11 @@ TGE = pathlib.Path("data/raw/tge_rdb.parquet")
 
 def load_legs() -> pd.DataFrame:
     tge = pd.read_parquet(TGE)
-    q = tge[tge["dur_min"] == 15].set_index("ts")
-    h = tge[tge["dur_min"] == 60].set_index("ts")
+    # DST: the repeated autumn hour collapses to duplicate UTC stamps
+    q = (tge[tge["dur_min"] == 15].drop_duplicates("ts", keep="first")
+         .set_index("ts"))
+    h = (tge[tge["dur_min"] == 60].drop_duplicates("ts", keep="first")
+         .set_index("ts"))
     idx = q.index.union(h.index.repeat(4) + pd.to_timedelta(
         np.tile([0, 15, 30, 45], len(h)), unit="m")).unique().sort_values()
     out = pd.DataFrame(index=idx)

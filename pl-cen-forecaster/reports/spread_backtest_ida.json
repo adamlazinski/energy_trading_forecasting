@@ -1,0 +1,254 @@
+{
+  "n_joint": 49075,
+  "span": "2024-12-15 14:00:00+00:00 .. 2026-05-10 21:30:00+00:00",
+  "legs": {
+    "ida1_pln": {
+      "gate": "honest_D-1",
+      "n": 47465,
+      "coverage_of_wf": 0.967,
+      "mean_S": -6.71,
+      "by_cost": {
+        "10.0": {
+          "n_trades": 9669,
+          "share_periods": 0.204,
+          "hit_rate": 0.621,
+          "pnl_per_trade": 30.0,
+          "pnl_per_quarter_of_year": 54920.0,
+          "top5day_share": 0.209,
+          "max_drawdown": -72017.0,
+          "by_quarter_pnl": {
+            "2024Q4": 19577.0,
+            "2025Q1": 78197.0,
+            "2025Q2": 99985.0,
+            "2025Q3": 58964.0,
+            "2025Q4": 41074.0,
+            "2026Q1": 131.0,
+            "2026Q2": -7827.0
+          }
+        },
+        "20.0": {
+          "n_trades": 7996,
+          "share_periods": 0.168,
+          "hit_rate": 0.603,
+          "pnl_per_trade": 26.51,
+          "pnl_per_quarter_of_year": 41237.0,
+          "top5day_share": 0.262,
+          "max_drawdown": -70709.0,
+          "by_quarter_pnl": {
+            "2024Q4": 12829.0,
+            "2025Q1": 60725.0,
+            "2025Q2": 83540.0,
+            "2025Q3": 56678.0,
+            "2025Q4": 25483.0,
+            "2026Q1": -15715.0,
+            "2026Q2": -11595.0
+          }
+        },
+        "40.0": {
+          "n_trades": 5244,
+          "share_periods": 0.11,
+          "hit_rate": 0.569,
+          "pnl_per_trade": 15.0,
+          "pnl_per_quarter_of_year": 16697.0,
+          "top5day_share": 0.583,
+          "max_drawdown": -68258.0,
+          "by_quarter_pnl": {
+            "2024Q4": 3478.0,
+            "2025Q1": 37690.0,
+            "2025Q2": 44367.0,
+            "2025Q3": 25138.0,
+            "2025Q4": 13026.0,
+            "2026Q1": -28054.0,
+            "2026Q2": -16965.0
+          }
+        }
+      }
+    },
+    "ida2_pln": {
+      "gate": "honest_D-1",
+      "n": 47913,
+      "coverage_of_wf": 0.976,
+      "mean_S": -9.88,
+      "by_cost": {
+        "10.0": {
+          "n_trades": 11073,
+          "share_periods": 0.231,
+          "hit_rate": 0.587,
+          "pnl_per_trade": 14.3,
+          "pnl_per_quarter_of_year": 29015.0,
+          "top5day_share": 0.377,
+          "max_drawdown": -67961.0,
+          "by_quarter_pnl": {
+            "2024Q4": 19698.0,
+            "2025Q1": 29997.0,
+            "2025Q2": 47512.0,
+            "2025Q3": 14345.0,
+            "2025Q4": 47741.0,
+            "2026Q1": 354.0,
+            "2026Q2": -1299.0
+          }
+        },
+        "20.0": {
+          "n_trades": 9219,
+          "share_periods": 0.192,
+          "hit_rate": 0.569,
+          "pnl_per_trade": 9.37,
+          "pnl_per_quarter_of_year": 16192.0,
+          "top5day_share": 0.615,
+          "max_drawdown": -70704.0,
+          "by_quarter_pnl": {
+            "2024Q4": 13530.0,
+            "2025Q1": 16974.0,
+            "2025Q2": 31196.0,
+            "2025Q3": 22002.0,
+            "2025Q4": 23921.0,
+            "2026Q1": -14373.0,
+            "2026Q2": -6833.0
+          }
+        },
+        "40.0": {
+          "n_trades": 6304,
+          "share_periods": 0.132,
+          "hit_rate": 0.53,
+          "pnl_per_trade": -1.38,
+          "pnl_per_quarter_of_year": -1694.0,
+          "top5day_share": null,
+          "max_drawdown": -70418.0,
+          "by_quarter_pnl": {
+            "2024Q4": 6840.0,
+            "2025Q1": -2015.0,
+            "2025Q2": 12520.0,
+            "2025Q3": 8235.0,
+            "2025Q4": 5573.0,
+            "2026Q1": -29481.0,
+            "2026Q2": -10340.0
+          }
+        }
+      }
+    },
+    "ida3_pln": {
+      "gate": "honest_same-day-afternoon",
+      "n": 24054,
+      "coverage_of_wf": 0.49,
+      "mean_S": -3.63,
+      "by_cost": {
+        "10.0": {
+          "n_trades": 6477,
+          "share_periods": 0.269,
+          "hit_rate": 0.563,
+          "pnl_per_trade": 4.57,
+          "pnl_per_quarter_of_year": 5643.0,
+          "top5day_share": 1.251,
+          "max_drawdown": -55001.0,
+          "by_quarter_pnl": {
+            "2024Q4": 8968.0,
+            "2025Q1": 6092.0,
+            "2025Q2": -242.0,
+            "2025Q3": -16484.0,
+            "2025Q4": 25650.0,
+            "2026Q1": 1749.0,
+            "2026Q2": 3889.0
+          }
+        },
+        "20.0": {
+          "n_trades": 5644,
+          "share_periods": 0.235,
+          "hit_rate": 0.547,
+          "pnl_per_trade": -0.96,
+          "pnl_per_quarter_of_year": -1061.0,
+          "top5day_share": null,
+          "max_drawdown": -54193.0,
+          "by_quarter_pnl": {
+            "2024Q4": 5646.0,
+            "2025Q1": 1268.0,
+            "2025Q2": -12011.0,
+            "2025Q3": -8707.0,
+            "2025Q4": 11696.0,
+            "2026Q1": -4724.0,
+            "2026Q2": 1403.0
+          }
+        },
+        "40.0": {
+          "n_trades": 4237,
+          "share_periods": 0.176,
+          "hit_rate": 0.506,
+          "pnl_per_trade": -19.09,
+          "pnl_per_quarter_of_year": -16852.0,
+          "top5day_share": null,
+          "max_drawdown": -87276.0,
+          "by_quarter_pnl": {
+            "2024Q4": 2946.0,
+            "2025Q1": -8396.0,
+            "2025Q2": -29827.0,
+            "2025Q3": -16733.0,
+            "2025Q4": -7469.0,
+            "2026Q1": -16549.0,
+            "2026Q2": -4859.0
+          }
+        }
+      }
+    },
+    "rdb_vwap": {
+      "gate": "PROXY_includes_post-gate_trades",
+      "n": 46409,
+      "coverage_of_wf": 0.946,
+      "mean_S": -10.89,
+      "by_cost": {
+        "10.0": {
+          "n_trades": 13507,
+          "share_periods": 0.291,
+          "hit_rate": 0.56,
+          "pnl_per_trade": 8.53,
+          "pnl_per_quarter_of_year": 20747.0,
+          "top5day_share": 0.594,
+          "max_drawdown": -80195.0,
+          "by_quarter_pnl": {
+            "2024Q4": 18524.0,
+            "2025Q1": 681.0,
+            "2025Q2": 36368.0,
+            "2025Q3": 53373.0,
+            "2025Q4": 25448.0,
+            "2026Q1": -14472.0,
+            "2026Q2": -4646.0
+          }
+        },
+        "20.0": {
+          "n_trades": 11729,
+          "share_periods": 0.253,
+          "hit_rate": 0.535,
+          "pnl_per_trade": 1.47,
+          "pnl_per_quarter_of_year": 3111.0,
+          "top5day_share": 3.817,
+          "max_drawdown": -82171.0,
+          "by_quarter_pnl": {
+            "2024Q4": 12620.0,
+            "2025Q1": -12041.0,
+            "2025Q2": 16013.0,
+            "2025Q3": 23823.0,
+            "2025Q4": 17527.0,
+            "2026Q1": -28912.0,
+            "2026Q2": -11812.0
+          }
+        },
+        "40.0": {
+          "n_trades": 8794,
+          "share_periods": 0.189,
+          "hit_rate": 0.498,
+          "pnl_per_trade": -14.19,
+          "pnl_per_quarter_of_year": -22957.0,
+          "top5day_share": null,
+          "max_drawdown": -135407.0,
+          "by_quarter_pnl": {
+            "2024Q4": 4482.0,
+            "2025Q1": -25531.0,
+            "2025Q2": -15495.0,
+            "2025Q3": 1463.0,
+            "2025Q4": -14454.0,
+            "2026Q1": -52857.0,
+            "2026Q2": -22396.0
+          }
+        }
+      }
+    }
+  }
+}
