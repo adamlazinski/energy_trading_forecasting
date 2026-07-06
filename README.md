@@ -1,18 +1,28 @@
 # Energy Trading Forecasting
 
-Forecasting models and research for energy trading (power, gas, and related commodities).
+Research monorepo for Polish power-market forecasting and trading, centered on
+the post-2024-06-14 balancing reform (single-price CEN, central dispatch).
 
-## Structure
+## Contents
 
-- `src/` — core library code (data loaders, feature engineering, models)
-- `notebooks/` — exploratory analysis and research notebooks
-- `data/` — local datasets (gitignored; not committed)
-- `tests/` — unit tests
+- `pl-cen-forecaster/` — probabilistic forecaster for the Polish imbalance
+  price (CEN) on 15-min settlement periods. PSE v2 + ENTSO-E data layers,
+  feature panel, quantile targets. See its `SPEC.md`.
+- `docs/research_directions_and_specs.md` — survey of research directions
+  (market making, trend/stat-arb, physical) built on top of the forecaster.
+- `docs/SPEC_A_rdb_cen_spread.md` — Project A: is the intraday↔imbalance
+  (RDB↔CEN) spread predictable? Extension of pl-cen-forecaster.
+- `docs/SPEC_B_bess_zpg.md` — Project B: BESS offer-curve design under PSE
+  central dispatch (ZPG). Deep three-layer build; planned as its own repo
+  (`pl-bess-zpg`) reusing the forecaster's data layer.
 
-## Setup
+## Setup (pl-cen-forecaster)
 
 ```bash
+cd pl-cen-forecaster
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+See `pl-cen-forecaster/Makefile` for data-build targets.
