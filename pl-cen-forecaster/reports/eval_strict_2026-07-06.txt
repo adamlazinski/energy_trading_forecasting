@@ -1,0 +1,59 @@
+panel (71928, 148), 47 features, extended=False
+span 2024-06-16 14:00:00+00:00 .. 2026-07-05 21:45:00+00:00
+dev 66552 rows, holdout-test 5376 rows (last 8 weeks untouched until the end)
+
+== CV (dev, forward-chaining) mean pinball ==
+                       mean    std
+model                             
+B_pse_final_vintage   18.53   6.26
+GBM                   63.83  11.71
+B1_da_anchor          77.15  15.66
+B2_climatology        82.45   9.93
+B0_persistence       138.54  23.72 
+
+== HOLDOUT (last 8 weeks) ==
+GBM                      mean_pinball=   71.23  P10-90 cov=0.56  P25-75 cov=0.33
+B0_persistence           mean_pinball=  140.83  P10-90 cov=0.00  P25-75 cov=0.00
+B1_da_anchor             mean_pinball=   87.05  P10-90 cov=0.18  P25-75 cov=0.18
+B2_climatology           mean_pinball=   89.65  P10-90 cov=0.68  P25-75 cov=0.41
+B_pse_final_vintage      mean_pinball=   27.47  P10-90 cov=0.31  P25-75 cov=0.31
+
+== GBM pinball by hour block (holdout) ==
+          0.10    0.25    0.50    0.75   0.90
+night    28.49   41.45   44.80   35.83  23.78
+am_ramp  44.68   69.09   73.04   52.68  31.48
+midday   99.95  150.52  153.04  106.67  54.62
+pm       87.65  126.49  127.66   92.54  53.38
+ev_ramp  64.82  100.02  110.53   96.97  78.55
+late     31.07   47.90   52.56   41.62  28.75
+
+== GBM pinball by month (holdout) ==
+    0.10    0.25    0.50   0.75   0.90
+5  47.09   75.72   77.39  54.73  32.44
+6  63.75   94.14   98.99  78.17  51.88
+7  83.10  110.68  122.16  91.50  52.90
+
+== GBM feature importance (P50, top 20) ==
+fx_da_day_std       1473
+fx_mfrr_g           1399
+fx_co2              1387
+imb_pubday_std      1365
+fx_sk_d1            1347
+doy_sin             1275
+fx_da_day_mean      1273
+fx_load_fcst        1257
+fx_afrr_d           1213
+cen_pubday_std      1165
+imb_pubday_max      1158
+fx_rce_da_spread    1157
+cen_pubday_max      1155
+doy_cos             1154
+cen_pubday_min      1084
+fx_da               1075
+fx_da_diff1d        1036
+imb_pubday_min      1029
+fx_afrr_g           1015
+fx_fcr_g            1010
+Name: 0.5, dtype: int32
+
+wrote data/proc/report_strict.json
