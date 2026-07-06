@@ -1,0 +1,40 @@
+[poeb] MARGINAL PROXY = ceb_sr settlement prices (poeb pull pending)
+panel 72192 periods, poeb coverage 36.8%, 2024-06-14 22:00:00+00:00 .. 2026-07-06 21:45:00+00:00
+
+== activation frequency (PP energy; near-continuous under central dispatch) ==
+up (delivered): 99.9% of periods; down (withdrawn): 0.0%
+-> binary activation is uninformative; the battery-relevant object is the MARGINAL PRICE distribution below.
+
+== activated volumes by block (median MWh per 15min) ==
+         eb_d_pp  eb_w_pp  eb_afrrg  eb_afrrd
+block                                        
+night      183.5   -125.2       2.1      -1.0
+am_ramp    219.4   -126.8       2.8      -1.9
+midday     252.5   -124.9       0.2      -7.5
+pm         250.1   -145.2       5.6      -0.6
+ev_ramp    215.3   -125.1       8.6      -0.5
+late       180.8   -114.1       4.4      -2.0 
+
+== marginal accepted price (up, ofcg), activated periods ==
+          count    10%    50%    90%
+block                               
+night    6705.0  238.0  415.0  554.0
+am_ramp  4441.0  250.0  458.0  678.0
+midday   3434.0  178.0  426.0  682.0
+pm       4691.0  234.0  482.0  718.0
+ev_ramp  5017.0  331.0  520.0  762.0
+late     2252.0  289.0  445.0  614.0 
+
+== PICASSO aFRR platform price vs domestic marginal (up) ==
+n=26540  spread pzeb-ceb: mean=-460.8  std=717.6  P(|spread|>100)=97.17%
+
+== example: P(activation) for a discharge offer, by block ==
+block          200    400    600    800   1000   1500
+night        0.933  0.558  0.054  0.008  0.006  0.003
+am_ramp      0.940  0.650  0.191  0.043  0.022  0.008
+midday       0.880  0.569  0.165  0.058  0.034  0.014
+pm           0.921  0.690  0.228  0.065  0.036  0.014
+ev_ramp      0.978  0.799  0.291  0.080  0.039  0.010
+late         0.966  0.652  0.110  0.029  0.011  0.003
+
+wrote reports/activation_curves_v0.json

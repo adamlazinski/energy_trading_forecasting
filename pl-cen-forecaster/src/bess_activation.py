@@ -35,7 +35,22 @@ PRICE_GRID_DN = np.arange(-500, 1001, 50)     # PLN/MWh charge offers
 
 def load() -> pd.DataFrame:
     raw = pathlib.Path("data/raw")
-    poeb = pd.read_parquet(raw / "pse_poeb_rbn.parquet")[["ts", "ofcg", "ofcd", "ofp"]]
+    marg = raw / "pse_poeb_marginals.parquet"
+    if marg.exists() and len(pd.read_parquet(marg)) > 20000:   # >~200 days
+        poeb = pd.read_parquet(marg).rename(
+            columns={"ofcg_max": "ofcg", "ofcd_min": "ofcd", "ofp_sum": "ofp"})
+        poeb = poeb[["ts", "ofcg", "ofcd", "ofp"]]
+        print(f"[poeb] using per-offer marginals ({len(poeb)} periods)")
+    else:
+        # proxy: weighted-average settlement price of activated aFRR energy
+        # (crb-rozl ceb_sr_*) — flatter than the true marginal; flagged.
+        crb0 = pd.read_parquet(raw / "pse_imbalance.parquet")
+        poeb = pd.DataFrame({
+            "ts": crb0["ts"],
+            "ofcg": pd.to_numeric(crb0["ceb_sr_afrrg_cost"], errors="coerce"),
+            "ofcd": pd.to_numeric(crb0["ceb_sr_afrrd_cost"], errors="coerce"),
+            "ofp": pd.NA})
+        print("[poeb] MARGINAL PROXY = ceb_sr settlement prices (poeb pull pending)")
     eb = pd.read_parquet(raw / "pse_bal_energy.parquet")[
         ["ts", "eb_afrrg", "eb_afrrd", "eb_w_pp", "eb_d_pp"]]
     crb = pd.read_parquet(raw / "pse_imbalance.parquet")[
@@ -60,8 +75,8 @@ def activation_curves(df: pd.DataFrame) -> dict:
     """Empirical pi(p | block) per direction, discriminatory approximation."""
     out = {"up": {}, "down": {}}
     for blk, g in df.groupby("block", observed=True):
-        up_act = g["eb_w_pp"].fillna(0) > 0          # energy delivered upward
-        dn_act = g["eb_d_pp"].fillna(0) > 0
+        up_act = g["eb_d_pp"].fillna(0) > 0          # d = delivered = up/discharge
+        dn_act = g["eb_w_pp"].fillna(0) > 0          # w = withdrawn = down/charge
         m_up = g.loc[up_act, "ofcg"].dropna()
         m_dn = g.loc[dn_act, "ofcd"].dropna()
         out["up"][str(blk)] = {
@@ -83,15 +98,16 @@ def main():
     print(f"panel {len(df)} periods, poeb coverage {len(have)/len(df):.1%}, "
           f"{df['ts'].min()} .. {df['ts'].max()}\n")
 
-    up_act = df["eb_w_pp"].fillna(0) > 0
-    dn_act = df["eb_d_pp"].fillna(0) > 0
-    print("== activation frequency ==")
-    print(f"up (discharge pays): {up_act.mean():.1%} of periods; "
-          f"down (charge gets paid): {dn_act.mean():.1%}")
-    print(df.groupby('block', observed=True)[['eb_w_pp', 'eb_d_pp']]
-            .apply(lambda g: pd.Series({
-                'up_freq': (g['eb_w_pp'].fillna(0) > 0).mean(),
-                'dn_freq': (g['eb_d_pp'].fillna(0) > 0).mean()})).round(3), "\n")
+    up_act = df["eb_d_pp"].fillna(0) > 0
+    dn_act = df["eb_w_pp"].fillna(0) > 0
+    print("== activation frequency (PP energy; near-continuous under central dispatch) ==")
+    print(f"up (delivered): {up_act.mean():.1%} of periods; "
+          f"down (withdrawn): {dn_act.mean():.1%}")
+    print("-> binary activation is uninformative; the battery-relevant object is "
+          "the MARGINAL PRICE distribution below.\n")
+    print("== activated volumes by block (median MWh per 15min) ==")
+    print(df.groupby('block', observed=True)[['eb_d_pp', 'eb_w_pp', 'eb_afrrg', 'eb_afrrd']]
+            .median().round(1), "\n")
 
     print("== marginal accepted price (up, ofcg), activated periods ==")
     m = df.loc[up_act, ["block", "ofcg"]].dropna()
