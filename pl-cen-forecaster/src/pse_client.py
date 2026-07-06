@@ -68,10 +68,15 @@ class PSEClient:
         self.base = base
         self.pause = pause  # be polite between paged requests
 
-    def _get(self, url: str, params: dict | None = None) -> dict:
-        r = SESSION.get(url, params=params, timeout=60)
-        r.raise_for_status()
-        return r.json()
+    def _get(self, url: str, params: dict | None = None, tries: int = 4) -> dict:
+        for k in range(tries):
+            r = SESSION.get(url, params=params, timeout=60)
+            if r.status_code >= 500 and k < tries - 1:   # transient server hiccups
+                time.sleep(2.0 * (k + 1))
+                continue
+            r.raise_for_status()
+            return r.json()
+        raise RuntimeError("unreachable")
 
     def fetch(self, resource: str, date_from: str, date_to: str,
               date_field: str = DATE_FIELD, extra_filter: str | None = None,
