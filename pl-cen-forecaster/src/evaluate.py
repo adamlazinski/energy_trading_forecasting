@@ -13,9 +13,11 @@ import pathlib
 import numpy as np
 import pandas as pd
 
-from . import features, models, targets
+from . import conformal, features, models, targets
 from .build_dataset import load_cfg
 from .models import QUANTILES
+
+CAL_WEEKS = 6          # tail of dev held back for conformal offsets
 
 
 def pinball(y: pd.Series, pred: pd.DataFrame, quantiles=QUANTILES) -> pd.Series:
@@ -72,9 +74,26 @@ def run(extended: bool = False, config: str = "config.yaml") -> dict:
     print("== CV (dev, forward-chaining) mean pinball ==")
     print(cv_summary.round(2), "\n")
 
-    # ---- final fit on all dev, score holdout --------------------------------
-    gbm = models.QuantileGBM().fit(dev[fcols], dev["y"])
-    preds = {"GBM": gbm.predict(test[fcols]), **models.predict_baselines(dev, test)}
+    # ---- final fit: train on dev minus calibration tail, conformalize -------
+    cal_cut = dev["ts"].max() - pd.Timedelta(weeks=CAL_WEEKS)
+    embargo = pd.Timedelta(minutes=cfg["horizon_minutes"])
+    tr_f = dev[dev["ts"] < cal_cut - embargo]
+    cal = dev[dev["ts"] >= cal_cut].reset_index(drop=True)
+    gbm = models.QuantileGBM().fit(tr_f[fcols], tr_f["y"])
+
+    p_cal = gbm.predict(cal[fcols])
+    off_g = conformal.fit_offsets(cal["y"], p_cal)
+    off_h = conformal.fit_offsets(cal["y"], p_cal,
+                                  groups=conformal.hour_block(cal["hour"]))
+
+    p_raw = gbm.predict(test[fcols])
+    preds = {
+        "GBM": p_raw,
+        "GBM_conf": conformal.apply_offsets(p_raw, off_g),
+        "GBM_conf_hour": conformal.apply_offsets(
+            p_raw, off_h, groups=conformal.hour_block(test["hour"])),
+        **models.predict_baselines(dev, test),
+    }
 
     report = {"extended": extended, "n_features": len(fcols),
               "cv": cv_summary.to_dict(), "holdout": {}}
@@ -87,9 +106,9 @@ def run(extended: bool = False, config: str = "config.yaml") -> dict:
         print(f"{name:24s} mean_pinball={pb.mean():8.2f}  "
               f"P10-90 cov={cov['P10-P90']:.2f}  P25-75 cov={cov['P25-P75']:.2f}")
 
-    # blocks: hour of day + season, GBM vs best baseline
-    gp = preds["GBM"]
-    print("\n== GBM pinball by hour block (holdout) ==")
+    # blocks: hour of day + season, on the headline (hour-conformal) variant
+    gp = preds["GBM_conf_hour"]
+    print("\n== GBM_conf_hour pinball by hour block (holdout) ==")
     hour_block = pd.cut(test["hour"], [0, 6, 10, 14, 18, 22, 24], right=False,
                         labels=["night", "am_ramp", "midday", "pm", "ev_ramp", "late"])
     print(pinball_by(test["y"], gp, hour_block).round(2))
