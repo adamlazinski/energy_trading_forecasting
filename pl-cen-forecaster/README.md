@@ -31,3 +31,17 @@ make eval-ext    # + final-vintage pk5l features (leakage-caveat sensitivity)
 
 Data: PSE v2 API (free, no auth), ENTSO-E Transparency (free token),
 Open-Meteo (free, later iteration for RES nowcast features).
+
+## Results (holdout = last 8 weeks, H=60, strict features)
+
+| model | mean pinball | P10–P90 coverage (nom. 0.80) |
+|---|---|---|
+| **GBM + hour-conformal** | **68.5** | **0.76** |
+| GBM raw | 71.2 | 0.56 |
+| B1 day-ahead anchor | 87.1 | — |
+| B2 climatology | 89.7 | 0.68 |
+| B0 persistence | 140.8 | — |
+| *PSE final-vintage forecast* | *27.5* | *(information upper bound)* |
+
+Figures in `reports/figs/`; full numbers in `reports/`. The 68.5 → 27.5 gap
+is the value of near-delivery information — the ENTSO-E/intraday upgrade path.

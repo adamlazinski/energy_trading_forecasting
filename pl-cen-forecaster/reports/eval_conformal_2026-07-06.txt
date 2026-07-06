@@ -1,0 +1,61 @@
+panel (71928, 148), 47 features, extended=False
+span 2024-06-16 14:00:00+00:00 .. 2026-07-05 21:45:00+00:00
+dev 66552 rows, holdout-test 5376 rows (last 8 weeks untouched until the end)
+
+== CV (dev, forward-chaining) mean pinball ==
+                       mean    std
+model                             
+B_pse_final_vintage   18.53   6.26
+GBM                   63.83  11.71
+B1_da_anchor          77.15  15.66
+B2_climatology        82.45   9.93
+B0_persistence       138.54  23.72 
+
+== HOLDOUT (last 8 weeks) ==
+GBM                      mean_pinball=   71.20  P10-90 cov=0.56  P25-75 cov=0.33
+GBM_conf                 mean_pinball=   68.95  P10-90 cov=0.77  P25-75 cov=0.45
+GBM_conf_hour            mean_pinball=   68.47  P10-90 cov=0.76  P25-75 cov=0.47
+B0_persistence           mean_pinball=  140.83  P10-90 cov=0.00  P25-75 cov=0.00
+B1_da_anchor             mean_pinball=   87.05  P10-90 cov=0.18  P25-75 cov=0.18
+B2_climatology           mean_pinball=   89.65  P10-90 cov=0.68  P25-75 cov=0.41
+B_pse_final_vintage      mean_pinball=   27.47  P10-90 cov=0.31  P25-75 cov=0.31
+
+== GBM_conf_hour pinball by hour block (holdout) ==
+          0.10    0.25    0.50    0.75   0.90
+night    27.37   43.10   43.34   32.77  19.51
+am_ramp  44.87   70.29   71.69   53.14  29.56
+midday   82.09  134.28  151.33  104.60  53.63
+pm       81.52  120.31  129.50   91.04  49.65
+ev_ramp  61.42   99.32  109.38   97.32  72.83
+late     29.38   48.05   50.35   41.44  25.23
+
+== GBM pinball by month (holdout) ==
+    0.10    0.25    0.50   0.75   0.90
+5  44.00   71.07   78.00  57.46  31.62
+6  58.43   90.85   97.60  75.36  47.17
+7  72.52  113.78  117.31  82.98  46.23
+
+== GBM feature importance (P50, top 20) ==
+fx_da_day_std       1486
+fx_sk_d1            1443
+fx_mfrr_g           1422
+fx_co2              1406
+fx_da_day_mean      1324
+doy_sin             1320
+fx_load_fcst        1277
+imb_pubday_std      1213
+doy_cos             1196
+fx_afrr_d           1180
+fx_rce_da_spread    1138
+cen_pubday_std      1122
+cen_pubday_max      1114
+cen_pubday_min      1100
+imb_pubday_max      1075
+imb_pubday_min      1060
+fx_da_diff1d        1046
+fx_fcr_g            1044
+fx_afrr_g           1033
+fx_da               1006
+Name: 0.5, dtype: int32
+
+wrote data/proc/report_strict.json
