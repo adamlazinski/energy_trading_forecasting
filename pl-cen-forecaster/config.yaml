@@ -10,26 +10,34 @@ test:
   weeks: 8
 
 # ---- PSE v2 resources -------------------------------------------------------
-# Slugs to CONFIRM with `python -m src.pse_client discover`, then edit here.
-# rce-pln is confirmed (balancing energy price / RCE). The imbalance settlement
-# price (CEN) may be a distinct report — set target.resource once confirmed.
+# Slugs CONFIRMED live on 2026-07-06 against api.raporty.pse.pl.
+# Full field mapping: docs/pse_api_EndpointsMap.pdf (from api.raporty.pse.pl).
+# NOTE publication timing (verified from publication_ts on live data):
+#   crb-rozl (CEN)   -> published D+1 ~14:00  (!! large lag; AR features must respect it)
+#   rce-pln, csdac-pln -> published D-1 ~13:50 (known day-ahead; safe anchors)
+#   price-fcst        -> PSE's own rolling CEN forecast; check per-row publication_ts
 pse:
   base: "https://api.raporty.pse.pl/api"
   resources:
-    rce:            "rce-pln"        # RCE balancing energy price (confirmed)
-    # --- confirm the slugs below via discover, then fill in ---
-    imbalance:      "CONFIRM"        # CEN imbalance settlement price
-    pv_gen:         "CONFIRM"        # PV generation actual
-    wind_gen:       "CONFIRM"        # wind generation actual
-    demand:         "CONFIRM"        # actual system demand
-    plan_pk5l:      "CONFIRM"        # PK5L: demand/PV/wind/surplus forecast
-    xborder:        "CONFIRM"        # cross-border exchange
-    reserve_prices: "CONFIRM"        # FCR/aFRR/mFRR/RR prices
-    res_curtail:    "CONFIRM"        # non-market RES redispatch (curtailment)
+    imbalance:      "crb-rozl"       # CEN (cen_cost) + CKOEB + CEB components  [TARGET]
+    price_fcst:     "price-fcst"     # PSE's own CEN/CKOEB forecast — feature + benchmark
+    rce:            "rce-pln"        # RCE market energy price (pub D-1)
+    da_price:       "csdac-pln"      # SDAC day-ahead price (csdac_pln) — anchor
+    plan_pk5l:      "pk5l-wp"        # demand/PV/wind fcst, planned exchange, surplus (time col: plan_dtime)
+    kse_load:       "kse-load"       # load_actual + load_fcst
+    kse_snapshot:   "pdgobpkd"       # actual PV (gen_fv), wind (gen_wi), demand, xborder balance, reserves
+    xborder_flows:  "przeplywy-mocy" # per-border flows; long format (section_code, value) — pivot
+    imb_energy:     "en-rozl"        # imbalance energy volume + balance (sign of system)
+    bal_energy:     "eb-rozl"        # activated balancing energy per product/direction
+    reserve_prices_basic: "cmbp-tp"  # FCR/aFRR/mFRR/RR capacity prices, basic mode
+    reserve_prices_suppl: "cmbu-tu"  # same, supplementary mode
+    reserve_req:    "zmb"            # procured balancing capacity per product/direction
+    contracting:    "sk"             # KSE contracting state (sk_cost + D-1/D forecasts)
+    co2:            "rcco2"          # CO2 settlement price (daily)
 
 target:
-  resource:  "rce-pln"    # switch to the CEN slug once confirmed
-  value_col: "rce_pln"    # the numeric price column in that report
+  resource:  "imbalance"    # -> crb-rozl
+  value_col: "cen_cost"     # CEN, PLN/MWh
 
 # ---- ENTSO-E (validation + cross-border) -----------------------------------
 entsoe:
