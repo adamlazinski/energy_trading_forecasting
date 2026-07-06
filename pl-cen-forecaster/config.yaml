@@ -27,6 +27,7 @@ pse:
     kse_load:       "kse-load"       # load_actual + load_fcst
     kse_snapshot:   "pdgobpkd"       # actual PV (gen_fv), wind (gen_wi), demand, xborder balance, reserves
     xborder_flows:  "przeplywy-mocy" # per-border flows; long format (section_code, value) — pivot
+    kse_actuals:    "his-wlk-cal"    # realized demand, PV (pv), wind (wi), xborder (swm_*)
     imb_energy:     "en-rozl"        # imbalance energy volume + balance (sign of system)
     bal_energy:     "eb-rozl"        # activated balancing energy per product/direction
     reserve_prices_basic: "cmbp-tp"  # FCR/aFRR/mFRR/RR capacity prices, basic mode

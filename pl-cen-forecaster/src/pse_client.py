@@ -24,6 +24,7 @@ import argparse
 import sys
 import time
 from datetime import date, datetime, timedelta
+from urllib.parse import quote
 
 import pandas as pd
 import requests
@@ -86,14 +87,16 @@ class PSEClient:
             flt = f"{date_field} ge '{lo}' and {date_field} le '{hi}'"
             if extra_filter:
                 flt = f"({flt}) and ({extra_filter})"
-            url = f"{self.base}/{resource}"
-            params = {"$filter": flt}
+            # the API 400s on '+'-encoded spaces, so percent-encode ourselves.
+            # $first lifts the default 100-row page cap (verified to 50k).
+            url = f"{self.base}/{resource}?$filter={quote(flt)}&$first=50000"
+            params = None
             while True:
                 js = self._get(url, params=params)
                 rows = js.get("value", js if isinstance(js, list) else [])
                 if rows:
                     frames.append(pd.DataFrame(rows))
-                nxt = js.get("nextPage") or js.get("@odata.nextLink")
+                nxt = js.get("nextLink") or js.get("nextPage") or js.get("@odata.nextLink")
                 if not nxt:
                     break
                 # follow the absolute next-page link; drop params (baked in)
@@ -107,23 +110,45 @@ class PSEClient:
 
 
 def _parse_time(df: pd.DataFrame) -> pd.DataFrame:
-    """Best-effort: build a tz-aware UTC 'ts' index from PSE time columns.
+    """Build a tz-aware UTC 'ts' column labelling the START of each interval.
 
-    PSE quarter-hour reports carry some of: dtime, udtczas, udtczas_oreb,
-    period, business_date. Column names vary by report, so we probe.
+    PSE v2 reports label rows with the interval END (dtime 00:15 <-> period
+    00:00-00:15), and most expose a ready-made UTC column. Preference order:
+    *_utc columns as plain UTC, else local (Europe/Warsaw) columns. The
+    end->start shift is inferred from the modal spacing of consecutive stamps
+    so hourly reports (e.g. pdgsz) shift by 1h, quarter-hour ones by 15min.
+    Publication timestamps are parsed alongside; daily reports (only
+    business_date) get ts = business_date midnight Warsaw.
     """
     df = df.copy()
-    cand = [c for c in ("dtime", "udtczas", "udtczas_oreb", "doba") if c in df.columns]
-    if cand:
-        col = cand[0]
-        ts = pd.to_datetime(df[col], errors="coerce")
-        # PSE publishes in local (Europe/Warsaw) civil time
-        if ts.dt.tz is None:
-            ts = ts.dt.tz_localize("Europe/Warsaw", ambiguous="NaT",
-                                   nonexistent="shift_forward")
-        df["ts"] = ts.dt.tz_convert("UTC")
-        df = df.sort_values("ts").reset_index(drop=True)
-    return df
+    utc_cand = [c for c in ("dtime_utc", "plan_dtime_utc") if c in df.columns]
+    loc_cand = [c for c in ("dtime", "plan_dtime", "udtczas", "udtczas_oreb") if c in df.columns]
+    if utc_cand:
+        ts = pd.to_datetime(df[utc_cand[0]], errors="coerce").dt.tz_localize("UTC")
+    elif loc_cand:
+        ts = pd.to_datetime(df[loc_cand[0]], errors="coerce")
+        ts = ts.dt.tz_localize("Europe/Warsaw", ambiguous="NaT",
+                               nonexistent="shift_forward").dt.tz_convert("UTC")
+    elif "business_date" in df.columns:      # daily reports (e.g. rcco2)
+        ts = pd.to_datetime(df["business_date"], errors="coerce")
+        ts = ts.dt.tz_localize("Europe/Warsaw").dt.tz_convert("UTC")
+        df["ts"] = ts
+        return df.sort_values("ts").reset_index(drop=True)
+    else:
+        return df
+
+    # end-of-interval label -> start-of-interval label; modal positive spacing
+    # (multi-version reports repeat each stamp, so zero diffs are dropped)
+    diffs = ts.dropna().sort_values().diff()
+    diffs = diffs[diffs > pd.Timedelta(0)]
+    if len(diffs):
+        ts = ts - diffs.mode().iloc[0]
+    df["ts"] = ts
+
+    if "publication_ts_utc" in df.columns:
+        df["pub_ts"] = pd.to_datetime(
+            df["publication_ts_utc"], errors="coerce").dt.tz_localize("UTC")
+    return df.sort_values("ts").reset_index(drop=True)
 
 
 def _cli():
