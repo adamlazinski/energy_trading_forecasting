@@ -45,3 +45,24 @@ Open-Meteo (free, later iteration for RES nowcast features).
 
 Figures in `reports/figs/`; full numbers in `reports/`. The 68.5 → 27.5 gap
 is the value of near-delivery information — the ENTSO-E/intraday upgrade path.
+
+On the 49k-row walk-forward test bed, Weron-style postprocessing
+(`python -m src.postprocess`: rolling QRA + binned IDR + quantile
+averaging) improves the GBM further: pinball 63.63 → **62.80**, P10–90
+coverage 0.775 → 0.795 (`reports/postprocess_walkforward.txt`).
+
+## Beyond the forecaster (same src/, see ../RESEARCH_LOG.md for findings)
+
+| module | what it does |
+|---|---|
+| `walkforward.py` | expanding-window OOS predictions — the honest test bed |
+| `postprocess.py` | QRA / IDR / distribution averaging on those predictions |
+| `backtest_spread.py` | DA↔CEN threshold rule (edge existed, died 2025-09-30) |
+| `pull_tge_rdb.py` | TGE RDB continuous + IDA1/2/3 auction results scraper |
+| `backtest_spread_ida.py` | same rule vs the *tradeable* intraday legs |
+| `pull_bpkdbo.py` | PSE balancing ladder → per-period marginal activated price |
+| `bess_activation.py` | Project B Layer 1: dispatcher activation curves |
+
+Long pulls (`pull_bpkdbo`, `pull_tge_rdb`, `pull_poeb_marginals`) are
+day-by-day, checkpointed, and safe to re-run — they skip days already in
+their output parquet.

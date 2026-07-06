@@ -1,23 +1,21 @@
 """
-Project B, Layer 1 (v0): an empirical model of PSE's dispatcher.
+Project B, Layer 1 (v1): an empirical model of PSE's dispatcher.
 
     python -m src.bess_activation
 
 For a battery submitting balancing-energy offers into ZPG/RBN, revenue is
-gated by ACTIVATION: offer at price p, direction up (discharge) is activated
-iff the dispatcher's marginal accepted price m_t reaches p. Public data gives
-us, per 15-min period:
-  poeb-rbn: ofcg / ofcd  — marginal accepted offer price, up / down
-  eb-rozl:  eb_afrrg/d, eb_w_pp/eb_d_pp — activated volumes by product/dir
-  crb-rozl: ceb_sr_afrrg/d — settlement price of activated aFRR energy
-  zeb-rozl: pzeb_afrrg/d  — PICASSO cross-border aFRR platform prices
+gated by ACTIVATION. Source: data/raw/pse_bpkdbo_marginals.parquet
+(src.pull_bpkdbo) — per 15-min period the dispatcher's net direction
+(dir: G=up/delivery, D=down/withdrawal) and the marginal activated price
+`marg` (oeb-bpkdbo merit ladder crossed at the eb-rozl activated volume;
+corr 0.88 with CEN). Offers are committed D-1, so any later conditional
+model may only use D-1-known features (the fx_ set).
 
-v0 deliverable (discriminatory-price approximation, caveat as per spec):
-  pi_up(p | block)  = P(activated up)   x P(m_up >= p | activated)
-  pi_down(p | block) = P(activated down) x P(m_down <= p | activated)
-estimated empirically per hour block + a summary of how PICASSO coupling
-moves the aFRR marginal price dispersion. Offers are committed D-1, so any
-later conditional model may only use D-1-known features (the fx_ set).
+Deliverable (marginal-pricing approximation):
+  pi_up(p | block)  = P(dir=G and marg >= p | block)   — discharge offer at p
+  pi_dn(p | block)  = P(dir=D and marg <= p | block)   — charge offer at p
+plus marginal-price distributions by block and by quarter (regime check
+across the 2025-09-30 SDAC 15-min reform).
 """
 from __future__ import annotations
 
@@ -32,107 +30,92 @@ BLOCK_LABELS = ["night", "am_ramp", "midday", "pm", "ev_ramp", "late"]
 PRICE_GRID_UP = np.arange(0, 2001, 50)        # PLN/MWh discharge offers
 PRICE_GRID_DN = np.arange(-500, 1001, 50)     # PLN/MWh charge offers
 
+MARG = pathlib.Path("data/raw/pse_bpkdbo_marginals.parquet")
+
 
 def load() -> pd.DataFrame:
-    raw = pathlib.Path("data/raw")
-    marg = raw / "pse_poeb_marginals.parquet"
-    if marg.exists() and len(pd.read_parquet(marg)) > 20000:   # >~200 days
-        poeb = pd.read_parquet(marg).rename(
-            columns={"ofcg_max": "ofcg", "ofcd_min": "ofcd", "ofp_sum": "ofp"})
-        poeb = poeb[["ts", "ofcg", "ofcd", "ofp"]]
-        print(f"[poeb] using per-offer marginals ({len(poeb)} periods)")
-    else:
-        # proxy: weighted-average settlement price of activated aFRR energy
-        # (crb-rozl ceb_sr_*) — flatter than the true marginal; flagged.
-        crb0 = pd.read_parquet(raw / "pse_imbalance.parquet")
-        poeb = pd.DataFrame({
-            "ts": crb0["ts"],
-            "ofcg": pd.to_numeric(crb0["ceb_sr_afrrg_cost"], errors="coerce"),
-            "ofcd": pd.to_numeric(crb0["ceb_sr_afrrd_cost"], errors="coerce"),
-            "ofp": pd.NA})
-        print("[poeb] MARGINAL PROXY = ceb_sr settlement prices (poeb pull pending)")
-    eb = pd.read_parquet(raw / "pse_bal_energy.parquet")[
-        ["ts", "eb_afrrg", "eb_afrrd", "eb_w_pp", "eb_d_pp"]]
-    crb = pd.read_parquet(raw / "pse_imbalance.parquet")[
-        ["ts", "cen_cost", "ceb_sr_afrrg_cost", "ceb_sr_afrrd_cost"]]
-    pic = pd.read_parquet(raw / "pse_picasso.parquet")[
-        ["ts", "pzeb_afrrg_cost", "pzeb_afrrd_cost", "zebpp"]]
-    da = pd.read_parquet(raw / "pse_da_price.parquet")[["ts", "csdac_pln"]]
-    df = poeb
-    for other in (eb, crb, pic, da):
-        df = df.merge(other, on="ts", how="outer")
-    df = df.sort_values("ts").reset_index(drop=True)
-    for c in df.columns:
-        if c != "ts":
-            df[c] = pd.to_numeric(df[c], errors="coerce")
+    df = pd.read_parquet(MARG)
+    crb = pd.read_parquet("data/raw/pse_imbalance.parquet")[["ts", "cen_cost"]]
+    da = pd.read_parquet("data/raw/pse_da_price.parquet")[["ts", "csdac_pln"]]
+    df = df.merge(crb, on="ts", how="left").merge(da, on="ts", how="left")
+    for c in ("cen_cost", "csdac_pln"):
+        df[c] = pd.to_numeric(df[c], errors="coerce")
     loc = df["ts"].dt.tz_convert("Europe/Warsaw")
     df["hour"] = loc.dt.hour
     df["block"] = pd.cut(df["hour"], BLOCKS, right=False, labels=BLOCK_LABELS)
-    return df
+    df["quarter"] = loc.dt.to_period("Q").astype(str)
+    return df.sort_values("ts").reset_index(drop=True)
 
 
 def activation_curves(df: pd.DataFrame) -> dict:
-    """Empirical pi(p | block) per direction, discriminatory approximation."""
+    """pi(p | block): unconditional on direction — the D-1 bidder does not
+    know the direction, so P(dir) x P(marg clears p | dir) is the object."""
     out = {"up": {}, "down": {}}
     for blk, g in df.groupby("block", observed=True):
-        up_act = g["eb_d_pp"].fillna(0) > 0          # d = delivered = up/discharge
-        dn_act = g["eb_w_pp"].fillna(0) > 0          # w = withdrawn = down/charge
-        m_up = g.loc[up_act, "ofcg"].dropna()
-        m_dn = g.loc[dn_act, "ofcd"].dropna()
+        up = g[g["dir"] == "G"]["marg"].dropna()
+        dn = g[g["dir"] == "D"]["marg"].dropna()
+        p_up, p_dn = len(up) / len(g), len(dn) / len(g)
         out["up"][str(blk)] = {
-            "p_act": round(float(up_act.mean()), 4),
-            "curve": {int(p): round(float(up_act.mean() * (m_up >= p).mean()), 4)
-                      for p in PRICE_GRID_UP} if len(m_up) else {},
+            "p_dir": round(p_up, 4),
+            "curve": {int(p): round(p_up * float((up >= p).mean()), 4)
+                      for p in PRICE_GRID_UP} if len(up) else {},
         }
         out["down"][str(blk)] = {
-            "p_act": round(float(dn_act.mean()), 4),
-            "curve": {int(p): round(float(dn_act.mean() * (m_dn <= p).mean()), 4)
-                      for p in PRICE_GRID_DN} if len(m_dn) else {},
+            "p_dir": round(p_dn, 4),
+            "curve": {int(p): round(p_dn * float((dn <= p).mean()), 4)
+                      for p in PRICE_GRID_DN} if len(dn) else {},
         }
     return out
 
 
 def main():
     df = load()
-    have = df.dropna(subset=["ofcg"])
-    print(f"panel {len(df)} periods, poeb coverage {len(have)/len(df):.1%}, "
-          f"{df['ts'].min()} .. {df['ts'].max()}\n")
+    print(f"panel {len(df)} periods, {df['ts'].min()} .. {df['ts'].max()}, "
+          f"marg nulls {df['marg'].isna().mean():.1%}, "
+          f"saturated {df['saturated'].mean():.1%}\n")
 
-    up_act = df["eb_d_pp"].fillna(0) > 0
-    dn_act = df["eb_w_pp"].fillna(0) > 0
-    print("== activation frequency (PP energy; near-continuous under central dispatch) ==")
-    print(f"up (delivered): {up_act.mean():.1%} of periods; "
-          f"down (withdrawn): {dn_act.mean():.1%}")
-    print("-> binary activation is uninformative; the battery-relevant object is "
-          "the MARGINAL PRICE distribution below.\n")
-    print("== activated volumes by block (median MWh per 15min) ==")
-    print(df.groupby('block', observed=True)[['eb_d_pp', 'eb_w_pp', 'eb_afrrg', 'eb_afrrd']]
-            .median().round(1), "\n")
+    print("== net dispatch direction by block ==")
+    print(pd.crosstab(df["block"], df["dir"], normalize="index").round(3), "\n")
 
-    print("== marginal accepted price (up, ofcg), activated periods ==")
-    m = df.loc[up_act, ["block", "ofcg"]].dropna()
-    print(m.groupby("block", observed=True)["ofcg"]
+    print("== marginal activated price by block x direction ==")
+    t = (df.groupby(["dir", "block"], observed=True)["marg"]
            .describe(percentiles=[.1, .5, .9])[["count", "10%", "50%", "90%"]]
-           .round(0).to_string(), "\n")
+           .round(0))
+    print(t.to_string(), "\n")
 
-    print("== PICASSO aFRR platform price vs domestic marginal (up) ==")
-    both = df.dropna(subset=["pzeb_afrrg_cost", "ceb_sr_afrrg_cost"])
-    if len(both):
-        d = both["pzeb_afrrg_cost"] - both["ceb_sr_afrrg_cost"]
-        print(f"n={len(both)}  spread pzeb-ceb: mean={d.mean():.1f}  "
-              f"std={d.std():.1f}  P(|spread|>100)={float((d.abs() > 100).mean()):.2%}\n")
+    print("== quarterly evolution (up-direction marginal, median / P90) ==")
+    qt = (df[df["dir"] == "G"].groupby("quarter")["marg"]
+            .agg(n="size", p50="median",
+                 p90=lambda s: s.quantile(0.9)).round(0))
+    print(qt.to_string(), "\n")
+
+    print("== implied BESS spread: up-marg minus down-marg, daily medians ==")
+    day = df["ts"].dt.tz_convert("Europe/Warsaw").dt.date
+    du = df[df["dir"] == "G"].groupby(day)["marg"].median()
+    dd = df[df["dir"] == "D"].groupby(day)["marg"].median()
+    sp = (du - dd).dropna()
+    print(f"n_days={len(sp)}  median={sp.median():.0f}  "
+          f"P10={sp.quantile(.1):.0f}  P90={sp.quantile(.9):.0f} PLN/MWh\n")
 
     curves = activation_curves(df)
-    pathlib.Path("reports/activation_curves_v0.json").write_text(
+    pathlib.Path("reports/activation_curves_v1.json").write_text(
         json.dumps(curves, indent=2))
-    print("== example: P(activation) for a discharge offer, by block ==")
-    hdr = [200, 400, 600, 800, 1000, 1500]
+
+    print("== P(activation) for a discharge offer at price p, by block ==")
+    hdr = [400, 500, 600, 800, 1000, 1500]
     print("block      " + "".join(f"{p:>7d}" for p in hdr))
     for blk in BLOCK_LABELS:
         c = curves["up"].get(blk, {}).get("curve", {})
         if c:
             print(f"{blk:10s} " + "".join(f"{c.get(p, float('nan')):7.3f}" for p in hdr))
-    print("\nwrote reports/activation_curves_v0.json")
+    print("\n== P(activation) for a charge offer at price p, by block ==")
+    hdr = [-100, 0, 50, 100, 200, 300]
+    print("block      " + "".join(f"{p:>7d}" for p in hdr))
+    for blk in BLOCK_LABELS:
+        c = curves["down"].get(blk, {}).get("curve", {})
+        if c:
+            print(f"{blk:10s} " + "".join(f"{c.get(p, float('nan')):7.3f}" for p in hdr))
+    print("\nwrote reports/activation_curves_v1.json")
 
 
 if __name__ == "__main__":

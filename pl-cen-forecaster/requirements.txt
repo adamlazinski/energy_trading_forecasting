@@ -8,3 +8,4 @@ holidays>=0.50
 lightgbm>=4.3
 scikit-learn>=1.4
 matplotlib>=3.8
+lxml>=5.0

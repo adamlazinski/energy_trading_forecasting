@@ -1,0 +1,150 @@
+# Research log & working notes
+
+Living notebook for the project: what we believe, what we built, what we
+found, and what's queued. Newest material at the top of each section.
+(READMEs describe *how to run things*; this file records *why and what we
+learned*.)
+
+## The one-paragraph thesis
+
+Post-reform (2024-06-14) Poland settles imbalance at a single 15-min price
+(CEN) under PSE central dispatch. CEN is volatile, partially predictable at
+a 60-min gate, and sits at the end of a chain of tradeable prices
+(day-ahead SDAC → intraday IDA auctions / RDB continuous → balancing).
+Everything here is some version of: **forecast the distribution of CEN (or
+of the dispatcher's marginal price) honestly at the gate, then check
+whether any spread against an executable leg survives costs.**
+
+## Hard rules (never violate)
+
+1. **Leakage gates.** A feature is usable at decision time `t` only if its
+   publication timestamp ≤ `t − H` (H=60 min). Settlement series (crb-rozl,
+   eb-rozl, bpkdbo ladders) publish **D+1 ~14:00** → modeled availability is
+   D+1 15:00 Warsaw; the freshest CEN history at the gate is 1–2 days old.
+   `csdac-pln`/`rce-pln` publish D-1 ~13:50 → legal anchors for all of day D.
+2. **Latest-vintage trap.** The PSE API keeps only the last vintage of
+   forecast reports (`price-fcst`, `pk5l-wp`, `pdgobpkd`) — publication
+   timestamps often post-date delivery. Those series are benchmarks or
+   `--extended`-flagged features, never strict inputs.
+3. **Regime breaks.** Never train across 2024-06-14 (reform). Encode
+   2025-09-30 (SDAC 15-min MTU) as a feature `regime_15min_da`, never split
+   on it. Any strategy verdict must be shown **by quarter** — regimes die
+   (we watched one die, see Findings).
+4. **Verify → commit → only then delete.** (Process rule, learned the hard
+   way.)
+
+## Findings so far (chronological)
+
+### F1. The CEN forecaster works and beats its anchors (2026-07)
+Quantile LightGBM (P10/25/50/75/90) + per-hour-block split-conformal
+recalibration, strict features, 8-week untouched holdout:
+mean pinball **68.5**, P10–90 coverage 0.76 — vs DA-anchor 87.1,
+climatology 89.7, persistence 140.8. PSE's own final-vintage forecast
+scores 27.5: that gap is the value of near-delivery information (ENTSO-E /
+intraday features are the upgrade path).
+
+### F2. The DA↔CEN spread edge existed — and died on reform day (flagship)
+Walk-forward (expanding windows, 49k OOS predictions, Dec 2024–May 2026),
+threshold rule long/short CEN−DA when P25/P75 clears cost: +41..65
+PLN/MWh/quarter, 54% hit rate, diversified across days — **until exactly
+2025-09-30**, when SDAC moved to 15-min products and the intra-hour shape
+arbitrage it was harvesting closed. Negative on the holdout confirms it as
+regime death, not overfit. This is a clean natural experiment
+(publishable; also exactly Weron-group territory).
+
+### F3. Weron-style postprocessing adds a real, free improvement (2026-07)
+Rolling weekly-refit postprocessing of the walk-forward predictions
+(`src/postprocess.py`), all OOS: QRA (quantile regression on
+[gbm_q50, DA]) 63.16; binned-IDR 66.31; **Vincentized average of
+{GBM, QRA, IDR} 62.80 vs GBM-alone 63.63**, coverage 0.775→0.795, better
+in 5/6 quarters — the Lipiecki/Uniejewski/Weron (2024) "averaging beats
+components" result reproduced on CEN. asinh-VST for the GBM itself was a
+wash (68.57 vs 68.47) — kept only for the future LEAR benchmark.
+
+### F4. The dispatcher's ladder is public and crossable (Project B, 2026-07)
+- `poeb-rbn` is **per-offer** (~88.5k rows/day): every accepted balancing
+  offer with up/down prices. It is the *supply curve*, ~static intraday
+  (offers commit D-1); its max is the ladder top, **not** the marginal.
+- `oeb-bpkdbo` (~13k rows/day) is the ladder actually taken into the
+  balancing plan, with the net activation direction per period.
+- **Construction that works:** sort the bpkdbo ladder by price, cumulate
+  MW, cross at the activated volume from `eb-rozl` (MWh/15min × 4) → a
+  per-period *marginal activated price*. Validated: corr ≈ **0.88 with
+  CEN** (0.89 in up-periods) — consistent with CEN being built from
+  marginal costs of activated energy plus CKOEB/aFRR components.
+- Under central dispatch both directions activate nearly every period, so
+  "P(activation)" is only meaningful jointly with price: the object is the
+  **marginal-price distribution by direction and hour block**.
+- Summer-2024 sample: up-marginal median ~643 PLN/MWh (P90 ~966), down
+  median ~62 (P10 −150, i.e. paid to charge). That daily spread is the
+  BESS revenue engine for Layers 2–3.
+- Caveat: `ceb_sr_*` settlement-price columns only exist from **2025-07-11**
+  (PICASSO accession) — the earlier v0 "proxy" curves silently used only
+  that late window. v1 (true marginals, full history) supersedes them.
+- PICASSO `pzeb_*` semantics still unverified (spread ≈ −461 vs domestic —
+  flagged, not interpreted).
+
+### F5. TGE's public results page is scrapable — the intraday leg is free
+The WAF rejects bare curl but passes a normal browser header set; the
+tables are **server-rendered** (an earlier "JS-loaded" conclusion was an
+artifact of a WAF-stripped page). `?dateShow=DD-MM-YYYY` serves history
+(verified ≥ 2024-07). Per day: 24 hourly + 96 quarter-hourly instruments
+with RDB continuous min/max/VWAP + volumes and IDA1/2/3 uniform-price
+auctions (EUR & PLN). This unlocks Project A's *executable* leg — no paid
+TGE AIR subscription needed for EOD granularity.
+
+## Current pipeline map (pl-cen-forecaster/src)
+
+Data:
+- `pse_client.py` — PSE v2 API client (percent-encoded `$filter`,
+  `$first=50000`, `nextLink` pagination, 5xx retry, end→start label shift).
+- `build_dataset.py` — raw pulls → 15-min panel; latest-vintage-as-of
+  handling; flow pivots; hourly/daily alignment.
+- `pull_bpkdbo.py` — per-period marginal activated price + volume-grid
+  ladder snapshot from oeb-bpkdbo × eb-rozl (Project B backbone).
+- `pull_tge_rdb.py` — TGE RDB/IDA scraper (Project A intraday leg).
+- `pull_poeb_marginals.py` — legacy; its output was ladder-top stats, kept
+  as `data/raw/pse_poeb_laddertop.parquet` (ladder cap/depth features).
+
+Modeling / evaluation:
+- `features.py` — leakage-honest feature builder (fx_ anchors, published
+  history with staleness, xt_ extended quarantine).
+- `models.py` — baselines + per-quantile LightGBM (optional asinh VST),
+  monotone rearrangement.
+- `conformal.py` — split-conformal per-quantile offsets, hour-block groups.
+- `evaluate.py` — CV + holdout evaluation (`make eval`).
+- `walkforward.py` — expanding-window OOS predictions (the honest test bed
+  every strategy verdict runs on).
+- `postprocess.py` — QRA / binned-IDR / Vincentized averaging (F3).
+
+Strategy / analysis:
+- `backtest_spread.py` — DA↔CEN threshold rule (F2).
+- `backtest_spread_ida.py` — same rule vs IDA1/2/3 and RDB VWAP legs, with
+  per-leg gate-honesty labels (ida1/2: D-1; ida3: same-day afternoon only;
+  rdb_vwap: proxy). Runs once the TGE pull lands.
+- `bess_activation.py` — Layer 1 v1: direction frequencies, marginal-price
+  distributions by block × direction, activation curves
+  π_up(p|block) = P(dir=G ∧ marg ≥ p), quarterly regime table.
+- `report_figs.py` — report figures.
+
+## In flight right now (2026-07-06 evening)
+
+- `pull_bpkdbo` backfilling 2024-06-15 → today (~2.5 h; checkpointed,
+  resumable). Then: rerun `python -m src.bess_activation` → v1 curves.
+- `pull_tge_rdb` backfilling the same span (~25 min). Then:
+  `python -m src.backtest_spread_ida` → first honest verdict on the
+  *tradeable* CEN↔intraday spread.
+- ENTSO-E token awaited (user) → fresh RES/load actuals + IDA prices from
+  a second source + DE_LU spread features.
+
+## Queue (rough priority)
+
+1. Project A verdict with real legs (F5 data × walk-forward preds).
+2. BESS Layer 1 v1 (marginal-price distributions), then a conditional
+   quantile model of `marg` on D-1 features; Layers 2–3 per SPEC_B
+   (offer-curve DP, revenue stack).
+3. Weron continuation: LEAR benchmark (with VST), QRA over a wider model
+   pool, calibration-window averaging; possibly CDF-averaging (Ave-P).
+4. ENTSO-E integration when the token arrives.
+5. Optional: write up F2 as a short note (natural experiment on SDAC
+   15-min MTU) — candidate for contact with Weron's group.

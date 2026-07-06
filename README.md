@@ -5,9 +5,12 @@ the post-2024-06-14 balancing reform (single-price CEN, central dispatch).
 
 ## Contents
 
+- `RESEARCH_LOG.md` — **start here**: working notes — thesis, hard rules
+  (leakage gates, regime breaks), findings to date, pipeline map, queue.
 - `pl-cen-forecaster/` — probabilistic forecaster for the Polish imbalance
-  price (CEN) on 15-min settlement periods. PSE v2 + ENTSO-E data layers,
-  feature panel, quantile targets. See its `SPEC.md`.
+  price (CEN) on 15-min settlement periods, plus the strategy backtests and
+  the Project B (BESS) data layer that grew around it. PSE v2 + TGE +
+  ENTSO-E data layers, feature panel, quantile targets. See its `SPEC.md`.
 - `docs/research_directions_and_specs.md` — survey of research directions
   (market making, trend/stat-arb, physical) built on top of the forecaster.
 - `docs/SPEC_A_rdb_cen_spread.md` — Project A: is the intraday↔imbalance
