@@ -1,0 +1,76 @@
+{
+  "price_ref": "csdac_da_PROXY_LEG",
+  "verdict": "NEGATIVE at P25/P75 entries (loses at all costs). P10/P90 entries show positive pnl surviving 4x costs BUT driven by a single day-event (2026-06-30 evening DA spike faded, +5195 of +3978 net); ~4 independent events -> not a claimable edge. Consistent with the published efficiency null; retest with the real intraday leg and walk-forward windows.",
+  "variants": {
+    "P25_P75": [
+      {
+        "cost": 10.0,
+        "n_trades": 550,
+        "share_periods": 0.1023,
+        "hit_rate": 0.4218,
+        "pnl_total": -10723.0,
+        "pnl_per_mwh": -19.5,
+        "pnl_p5": -406.3,
+        "max_drawdown": -24022.0,
+        "long_share": 0.673
+      },
+      {
+        "cost": 20.0,
+        "n_trades": 398,
+        "share_periods": 0.074,
+        "hit_rate": 0.407,
+        "pnl_total": -10789.0,
+        "pnl_per_mwh": -27.11,
+        "pnl_p5": -453.2,
+        "max_drawdown": -21367.0,
+        "long_share": 0.671
+      },
+      {
+        "cost": 40.0,
+        "n_trades": 193,
+        "share_periods": 0.0359,
+        "hit_rate": 0.3834,
+        "pnl_total": -8001.0,
+        "pnl_per_mwh": -41.46,
+        "pnl_p5": -518.0,
+        "max_drawdown": -16687.0,
+        "long_share": 0.601
+      }
+    ],
+    "P10_P90": [
+      {
+        "cost": 10.0,
+        "n_trades": 25,
+        "share_periods": 0.0047,
+        "hit_rate": 0.24,
+        "pnl_total": 4458.0,
+        "pnl_per_mwh": 178.33,
+        "pnl_p5": -607.7,
+        "max_drawdown": -2869.0,
+        "long_share": 0.0
+      },
+      {
+        "cost": 20.0,
+        "n_trades": 22,
+        "share_periods": 0.0041,
+        "hit_rate": 0.2273,
+        "pnl_total": 5704.0,
+        "pnl_per_mwh": 259.29,
+        "pnl_p5": -263.0,
+        "max_drawdown": -1573.0,
+        "long_share": 0.0
+      },
+      {
+        "cost": 40.0,
+        "n_trades": 19,
+        "share_periods": 0.0035,
+        "hit_rate": 0.2105,
+        "pnl_total": 3978.0,
+        "pnl_per_mwh": 209.38,
+        "pnl_p5": -331.5,
+        "max_drawdown": -1663.0,
+        "long_share": 0.0
+      }
+    ]
+  }
+}
