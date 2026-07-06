@@ -1,0 +1,42 @@
+# ---- horizon & regime -------------------------------------------------------
+horizon_minutes: 60           # decision time = delivery - H  (SIDC XZ gate)
+regime:
+  single_price_start: "2024-06-14"   # RB reform phase 2; train from here on
+  train_start:        "2024-06-15"
+  da_15min_start:     "2025-09-30"   # encode as feature, don't split
+
+# most-recent contiguous block held out as the untouched test set
+test:
+  weeks: 8
+
+# ---- PSE v2 resources -------------------------------------------------------
+# Slugs to CONFIRM with `python -m src.pse_client discover`, then edit here.
+# rce-pln is confirmed (balancing energy price / RCE). The imbalance settlement
+# price (CEN) may be a distinct report — set target.resource once confirmed.
+pse:
+  base: "https://api.raporty.pse.pl/api"
+  resources:
+    rce:            "rce-pln"        # RCE balancing energy price (confirmed)
+    # --- confirm the slugs below via discover, then fill in ---
+    imbalance:      "CONFIRM"        # CEN imbalance settlement price
+    pv_gen:         "CONFIRM"        # PV generation actual
+    wind_gen:       "CONFIRM"        # wind generation actual
+    demand:         "CONFIRM"        # actual system demand
+    plan_pk5l:      "CONFIRM"        # PK5L: demand/PV/wind/surplus forecast
+    xborder:        "CONFIRM"        # cross-border exchange
+    reserve_prices: "CONFIRM"        # FCR/aFRR/mFRR/RR prices
+    res_curtail:    "CONFIRM"        # non-market RES redispatch (curtailment)
+
+target:
+  resource:  "rce-pln"    # switch to the CEN slug once confirmed
+  value_col: "rce_pln"    # the numeric price column in that report
+
+# ---- ENTSO-E (validation + cross-border) -----------------------------------
+entsoe:
+  zone: "PL"
+  neighbour: "DE_LU"
+
+# ---- paths ------------------------------------------------------------------
+paths:
+  raw:  "data/raw"
+  proc: "data/proc"
