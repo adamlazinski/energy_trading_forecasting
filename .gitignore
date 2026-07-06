@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Data & outputs
+data/*
+!data/.gitkeep
+*.csv
+*.parquet
+results/
+
+# OS
+.DS_Store
+
+# Env
+.env
