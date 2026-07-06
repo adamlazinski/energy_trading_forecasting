@@ -1,0 +1,114 @@
+{
+  "source": "walkforward_predictions.parquet (19 expanding blocks, 2024-12..2026-05)",
+  "price_ref": "csdac_da_PROXY_LEG",
+  "headline": {
+    "P25_P75": [
+      {
+        "cost": 10.0,
+        "n_trades": 8458,
+        "share_periods": 0.1723,
+        "hit_rate": 0.5437,
+        "pnl_total": 299827.0,
+        "pnl_per_mwh": 35.45,
+        "pnl_p5": -273.2,
+        "max_drawdown": -63830.0,
+        "long_share": 0.661
+      },
+      {
+        "cost": 20.0,
+        "n_trades": 6811,
+        "share_periods": 0.1388,
+        "hit_rate": 0.5333,
+        "pnl_total": 198004.0,
+        "pnl_per_mwh": 29.07,
+        "pnl_p5": -285.2,
+        "max_drawdown": -61274.0,
+        "long_share": 0.669
+      },
+      {
+        "cost": 40.0,
+        "n_trades": 4248,
+        "share_periods": 0.0866,
+        "hit_rate": 0.524,
+        "pnl_total": 102777.0,
+        "pnl_per_mwh": 24.19,
+        "pnl_p5": -307.0,
+        "max_drawdown": -50604.0,
+        "long_share": 0.689
+      }
+    ],
+    "P10_P90": [
+      {
+        "cost": 10.0,
+        "n_trades": 408,
+        "share_periods": 0.0083,
+        "hit_rate": 0.549,
+        "pnl_total": 22038.0,
+        "pnl_per_mwh": 54.01,
+        "pnl_p5": -173.1,
+        "max_drawdown": -3963.0,
+        "long_share": 0.674
+      },
+      {
+        "cost": 20.0,
+        "n_trades": 292,
+        "share_periods": 0.0059,
+        "hit_rate": 0.4795,
+        "pnl_total": 11117.0,
+        "pnl_per_mwh": 38.07,
+        "pnl_p5": -177.2,
+        "max_drawdown": -3696.0,
+        "long_share": 0.668
+      },
+      {
+        "cost": 40.0,
+        "n_trades": 138,
+        "share_periods": 0.0028,
+        "hit_rate": 0.3333,
+        "pnl_total": 2461.0,
+        "pnl_per_mwh": 17.83,
+        "pnl_p5": -195.2,
+        "max_drawdown": -5114.0,
+        "long_share": 0.696
+      }
+    ]
+  },
+  "by_quarter": {
+    "2024Q4": {
+      "n": 211,
+      "pnl": 13263.0,
+      "pnl_per_mwh": 62.9
+    },
+    "2025Q1": {
+      "n": 1216,
+      "pnl": 50224.0,
+      "pnl_per_mwh": 41.3
+    },
+    "2025Q2": {
+      "n": 1150,
+      "pnl": 75043.0,
+      "pnl_per_mwh": 65.3
+    },
+    "2025Q3": {
+      "n": 2083,
+      "pnl": 86702.0,
+      "pnl_per_mwh": 41.6
+    },
+    "2025Q4": {
+      "n": 862,
+      "pnl": -6077.0,
+      "pnl_per_mwh": -7.0
+    },
+    "2026Q1": {
+      "n": 1142,
+      "pnl": -16720.0,
+      "pnl_per_mwh": -14.6
+    },
+    "2026Q2": {
+      "n": 147,
+      "pnl": -4431.0,
+      "pnl_per_mwh": -30.1
+    }
+  },
+  "verdict": "The DA<->CEN threshold rule was genuinely profitable pre-reform (+40..65 PLN/MWh per quarter, 54% hit, diversified across ~300 win-days, survives 4x costs) and stops working at 2025-09-30 when SDAC moved to 15-min MTU: the edge was intra-hour shape arbitrage that hourly DA could not price, and the reform closed it. Post-reform quarters are flat-to-negative; the 8-week holdout's negative result is confirmed as the current regime, not bad luck. DA axis: dead. Open question moves to the intraday (IDA/RDB) leg at t-60."
+}
