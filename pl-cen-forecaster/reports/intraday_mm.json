@@ -1,0 +1,26 @@
+{
+  "battery": "1.0 MW / 2.0 MWh, eta_rt 0.88, c_deg 100.0",
+  "arbitrage_by_curve": {
+    "da": {
+      "n_days": 752,
+      "pf_pln_per_day": 881.2,
+      "thr_pln_per_day": 384.1,
+      "thr_ann_per_mw": 140204.0
+    },
+    "id": {
+      "n_days": 473,
+      "pf_pln_per_day": 1084.0,
+      "thr_pln_per_day": 462.6,
+      "thr_ann_per_mw": 168852.0
+    },
+    "cen": {
+      "n_days": 751,
+      "pf_pln_per_day": 1961.2,
+      "thr_pln_per_day": 989.4,
+      "thr_ann_per_mw": 361116.0
+    }
+  },
+  "intraday_minus_dayahead_thr_pln_per_day": 78.5,
+  "mm_spread_upside_pln_per_day_proxy": 31.4,
+  "note": "arb = SoC DP on each cleared-price curve (lower bound on MM); mm proxy = 0.5 x median RDB intra-period range x ~2 cycles (needs order-book data to realize)."
+}

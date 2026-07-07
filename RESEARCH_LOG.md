@@ -35,6 +35,47 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F14. Intraday sizing: real arb venue, thin MM spread; the value ladder is capacity ≫ balancing > intraday > DA
+`src/intraday_mm.py` — battery (1 MW/2 MWh) arbitrage value on each cleared
+price curve via a SoC DP (perfect-foresight ceiling + causal P25/P75
+threshold policy), plus an MM spread proxy. Grid fees excluded (Poland's
+storage reform relieves double-charging; efficiency+degradation are the
+modeled throughput cost — see the grid-cost note below).
+
+| curve | PF /day | threshold /day | ann/MW |
+|---|---|---|---|
+| day-ahead (csdac) | 881 | 384 | 140k |
+| intraday (TGE) | 1,084 | 463 | 169k |
+| balancing (CEN) | 1,961 | 989 | 361k |
+
+- **Intraday > day-ahead**: +78 PLN/day deployable (~20%), the intraday
+  curve is more dispersed — trading intraday is worth it over DA-only.
+- **Pure market-making is thin**: RDB intra-period range proxy ≈ 31 PLN/day.
+  The continuous book isn't wide/deep enough for bid-ask capture to be the
+  edge at these volumes; the intraday money is inter-period *arbitrage*
+  (curve shape), not spread capture. (Caveat: true MM P&L needs order-book/
+  tick data we don't have — TGE AIR, paid — so this is a lower bound.)
+- **Balancing dominates** (989/day, matches F7's conditional policy). The
+  CEN column is passive-balancing/imbalance-position value, not a freely
+  tradeable venue, so treat it as an upper reference for that leg.
+
+Strategic read: the battery's value ladder is **capacity (F8, ~8,700/day)
+≫ balancing energy (~990) > intraday arb (~460) > DA arb (~380)**. "Battery
+as intraday market maker" as a *standalone* edge is weaker than hoped
+(spreads thin); intraday is best used as an extra arbitrage venue stacked
+under the capacity+balancing core. Don't buy the tick-data feed on the MM
+thesis alone.
+
+**Grid-cost note (Poland storage reform):** double-charging of network fees
+(charge-leg as consumer + discharge-leg as generator) is legally
+*prohibited*; storage is defined as neither, connection fee halved. Our BESS
+numbers assume that relief holds (right for a transmission-connected
+balancing battery) and charge only round-trip efficiency (~12%) + degradation
+(~100 PLN/MWh). NOT included and needed for a real IRR: fixed connection/O&M,
+the halved-but-nonzero connection fee, balancing-responsibility costs; exact
+network-fee treatment varies by voltage/tariff — a due-diligence item, not a
+solved constant. So F8's 3.18M PLN/MW is gross of fixed costs.
+
 ### F13. Reserve-margin nowcast: the tightness edge is future info, not attainable at the gate
 Follow-up to F11's actionable lead ("nowcast the reserve margin"). Added
 leakage-safe published-history features of system tightness (rez_under,
