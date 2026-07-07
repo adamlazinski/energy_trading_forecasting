@@ -35,6 +35,30 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F20. Cross-border RES spillover: real mechanism, redundant alpha, no tradeable lead
+Tested the F19 idea across the DE→PL border (German RES surprise from ENTSO-E
+DE_LU forecast vs actual gen, 2025; `data/raw/de_res_surprise.parquet`).
+- **Spillover is real**: DE surprise → PL CEN−DA at −17 PLN/MWh per GW, 62%
+  sign — German wind surplus drags the Polish imbalance price down via export
+  flows, physically correct. But **weaker than PL's own surprise** (−67/GW,
+  72%, F19).
+- **Not incremental**: partial corr(DE, cen_move | PL_surprise) = −0.046; DE
+  adds ~nothing beyond the domestic signal. Two reasons — DE & PL surprises
+  co-move (+0.19, shared weather) and market coupling already puts most of
+  the German effect into the PL day-ahead price; the interconnector caps the
+  rest.
+- **No tradeable lead**: hypothesized eastward front propagation (DE leads PL)
+  — but corr(DE(t), PL(t+k)) peaks at **k=0**, not positive k. Wind surprises
+  are synoptic-scale (systems blanket both countries at once), so they don't
+  propagate with a usable lag. The "see PL's surprise coming via Germany"
+  enhancement doesn't exist.
+Verdict: a genuinely energy-specific mechanism (coupling, interconnector
+limits, front geography) worth *describing* for domain credibility, but the
+independent alpha over F19 is negligible. Untested refinement that could
+rescue it: condition on interconnector saturation (spillover should be
+strongest when the border has headroom) — but the base incremental signal
+(−0.046) is small enough that a regime split is unlikely to reach tradeable.
+
 ### F19. RES-surprise persistence: the first tradeable forecast edge (intraday-weather, reframed)
 `src/res_surprise.py` — the user's "sudden live-forecast changes" instinct,
 made concrete and POSITIVE. F10/F15 killed the day-ahead RES *forecast* (it's
