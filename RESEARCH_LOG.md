@@ -35,6 +35,51 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F7. BESS Layer 2: settlement rules pinned down; conditional policy ~1,240 PLN/day per 1 MW / 2 MWh on holdout
+Rules established from PSE's WDB training deck (Jan 2024, fetched from
+pse.pl; local copy of key facts below) and *verified in our data*:
+- **Uniform pricing, not pay-as-bid**: freely delivered/withdrawn balancing
+  energy settles at **CEB_PP** per 15-min period (forced delivery at
+  min/max(CEB_PP, CSDAC)). `crb-rozl` publishes it as `ceb_pp_cost` (100%
+  coverage). Consequence: a price-taking battery's optimal offer is its
+  **reservation price**, so the DP value function *is* the offer curve.
+- **CEN = min/max(CEB_PP, CSDAC) by contracting state SK** — verified:
+  72% of periods within 1 PLN (median error 0.00); residual is
+  CKOEB/aFRR-platform corrections.
+- **Offer gates**: initial OEB bind at the D-1 RBN gate (10:00–14:30;
+  csdac publishes 13:50, 40 min before close). Intraday updates (RBB, up
+  to 55 min before the hour) may only be LESS aggressive (up-price can
+  only rise, down-price only fall). So D-1 features are the right
+  conditioning set for the aggressive envelope.
+- **Activation approximation**: up-offer at p is in merit iff the period's
+  net direction is G and ceb_pp ≥ p (uniform-price logic). The bpkdbo
+  ladder crossing stays as diagnostics only — its volume units are
+  ambiguous (no ×k scaling reproduces ceb_pp exactly; CEB_PP embeds
+  redispatch costs), and the published price needs no reconstruction.
+  This also corrects F4's "512 PLN/MWh implied spread": settlement-price
+  spread G-vs-D medians are ~543 vs ~306 → **~240 PLN/MWh**, still ample.
+
+Build (`src/bess_cond_model.py` + `src/bess_optimizer.py`):
+- Conditional models on the CEN feature panel (strict fx_ set):
+  P(dir=G) Brier 0.197 vs 0.214 block-climatology; ceb_pp|G pinball
+  **30.6 vs 45.4** climatology; ceb_pp|D **61.1 vs 77.3** (8-wk holdout).
+- DP over SoC (piecewise-linear value, efficiency-exact off-grid states),
+  5-point quantile approximation of (dir, ceb_pp); reservation prices out.
+- Holdout simulation (56 days, 1 MW/2 MWh, η_rt 0.88, c_deg 100, SoC
+  carried overnight, terminal 300 PLN/MWh): **conditional 1,244 PLN/day**
+  (annualized ≈ 454k PLN/MW), 100% of days positive, 1.15 cycles/day;
+  unconditional-climatology policy 1,054 (+18% from the conditional
+  model); perfect-foresight bound 2,103 (we capture 59%).
+- Degradation sensitivity: c_deg 50/100/200 → 1,347 / 1,244 / 1,112
+  PLN/day, ≥96% positive days. The revenue is structural, not tail-luck.
+
+Caveats (in order of expected bite): price-taker assumption; in-merit ⇔
+"ceb_pp clears offer" ignores unit-level dispatch/network constraints and
+partial activations; counter-direction (forced) activations ignored;
+capacity-market (OMB) stacking not yet added — that's Layer 3 and only
+adds; grid fees on charged energy not modeled; holdout is one 8-week
+window (walk-forward version pending).
+
 ### F6. The *tradeable* intraday↔CEN spread: real edge through 2025, dead in 2026
 First run of `backtest_spread_ida.py` (walk-forward CEN quantiles × TGE
 legs, 49k joint periods Dec 2024–May 2026):

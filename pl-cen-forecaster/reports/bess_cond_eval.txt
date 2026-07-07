@@ -1,0 +1,4 @@
+train n=64151 to 2026-05-03 21:45:00+00:00; holdout n=5377 from 2026-05-10 21:45:00+00:00; 47 features
+direction: base rate G=0.696  Brier model=0.1968 vs block-climatology=0.2139
+ceb_pp|G: holdout n=3743  pinball model=30.64 vs qh-climatology=45.40
+ceb_pp|D: holdout n=1634  pinball model=61.12 vs qh-climatology=77.27

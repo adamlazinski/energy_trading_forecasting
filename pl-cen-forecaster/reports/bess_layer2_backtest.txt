@@ -1,0 +1,4 @@
+BESS Layer 2 holdout simulation (56 days), 1 MW / 2 MWh, eta_rt~0.88, c_deg=100
+conditional  PLN/day mean=  1244.5 median=  1108.4 [P10    237.6, P90   2360.0] pos=100% cycles/d=1.15 annualized/MW=454,243
+climatology  PLN/day mean=  1053.6 median=   995.2 [P10    185.9, P90   1885.8] pos=100% cycles/d=1.04 annualized/MW=384,548
+perfect      PLN/day mean=  2102.5 median=  2020.5 [P10    768.6, P90   3341.5] pos=100% cycles/d=- annualized/MW=767,408

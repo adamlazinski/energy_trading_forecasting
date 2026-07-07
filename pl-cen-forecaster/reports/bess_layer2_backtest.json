@@ -1,0 +1,41 @@
+{
+  "config": {
+    "P_MW": 1.0,
+    "E_MWH": 2.0,
+    "eta_oneway": 0.94,
+    "c_deg": 100.0,
+    "terminal_pln_mwh": 300.0,
+    "settlement": "uniform CEB_PP; activation iff dir matches and ceb_pp clears reservation price"
+  },
+  "results": {
+    "conditional": {
+      "n_days": 56,
+      "pnl_per_day_mean": 1244.5,
+      "pnl_per_day_median": 1108.4,
+      "pnl_per_day_p10": 237.6,
+      "pnl_per_day_p90": 2360.0,
+      "share_days_positive": 1.0,
+      "annualized_per_mw": 454243.0,
+      "cycles_per_day": 1.15
+    },
+    "climatology": {
+      "n_days": 56,
+      "pnl_per_day_mean": 1053.6,
+      "pnl_per_day_median": 995.2,
+      "pnl_per_day_p10": 185.9,
+      "pnl_per_day_p90": 1885.8,
+      "share_days_positive": 1.0,
+      "annualized_per_mw": 384548.0,
+      "cycles_per_day": 1.04
+    },
+    "perfect": {
+      "n_days": 56,
+      "pnl_per_day_mean": 2102.5,
+      "pnl_per_day_median": 2020.5,
+      "pnl_per_day_p10": 768.6,
+      "pnl_per_day_p90": 3341.5,
+      "share_days_positive": 1.0,
+      "annualized_per_mw": 767408.0
+    }
+  }
+}
