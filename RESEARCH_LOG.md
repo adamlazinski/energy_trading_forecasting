@@ -35,6 +35,27 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F13. Reserve-margin nowcast: the tightness edge is future info, not attainable at the gate
+Follow-up to F11's actionable lead ("nowcast the reserve margin"). Added
+leakage-safe published-history features of system tightness (rez_under,
+rez_over_demand; D+1 availability rule) — `features.build(tight=)`.
+- Raw signal is real: lagged `rez_under` corr(CEN)=0.24 (> lagged CEN's
+  0.16) with day-lag autocorr 0.69, and a **0.19 partial correlation with
+  CEN controlling for lagged CEN** — genuinely independent information.
+- **But no forecast gain**: 8-week-holdout A/B pinball 68.54 (tight) vs
+  68.46 (base); coverage improves slightly 0.763→0.773. The GBM ranks the
+  features (rezo_pubday_min high) but extracts no accuracy — the signal is
+  already captured by the *reserve-capacity prices* (fx_afrr_g/d, cleared
+  D-1) and the DA anchor, which encode the market's *expected* tightness.
+- The resolution of the F11 puzzle: the −6.4 oracle lever is
+  *contemporaneous* realized tightness, which at the H=60 gate is **future
+  information**. A forecast of it from gate-time features is redundant with
+  what the GBM already does; the lagged actual mean-reverts (autocorr 0.69)
+  and is subsumed by expected-tightness features already in the panel. So
+  there is **no leakage-safe fundamentals feature that materially improves
+  CEN** — 68.5 is close to the practical tree-model ceiling for the D-1
+  information set. `tight` default OFF, kept for the small coverage gain.
+
 ### F12. Temporal hierarchy (THieF): no gain — the GBM is already temporally coherent
 `src/temporal_hierarchy.py` — forecast CEN's hourly and 4-hour-block means
 with their own GBMs and reconcile the 15-min median onto them (calibration-

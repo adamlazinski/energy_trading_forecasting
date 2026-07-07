@@ -238,8 +238,8 @@ def extended_features(df: pd.DataFrame) -> pd.DataFrame:
 
 def feature_cols(df: pd.DataFrame, extended: bool = False) -> list[str]:
     """The model's input columns: fx_/cal/hist prefixes, xt_ if extended."""
-    core_prefix = ("fx_", "cen_", "imb_", "qh_", "doy_", "hour", "dow", "month",
-                   "is_", "ramp_", "regime_")
+    core_prefix = ("fx_", "cen_", "imb_", "rezu_", "rezo_", "qh_", "doy_",
+                   "hour", "dow", "month", "is_", "ramp_", "regime_")
     cols = [c for c in df.columns if c.startswith(core_prefix)
             and not c.startswith(NON_FEATURE_PREFIXES)]
     if extended:
@@ -248,13 +248,21 @@ def feature_cols(df: pd.DataFrame, extended: bool = False) -> list[str]:
 
 
 def build(df: pd.DataFrame, cfg: dict, extended: bool = False,
-          res: bool = False) -> pd.DataFrame:
+          res: bool = False, tight: bool = False) -> pd.DataFrame:
     """Assemble the feature panel. Expects 'ts' and target 'y' present.
 
     res=True adds the ENTSO-E day-ahead RES / residual-demand block. Default
     OFF: an 8-week-holdout A/B showed it neutral-to-slightly-worse for the
     CEN point forecast — the day-ahead price already embeds the day-ahead RES
     forecast (F10). Kept available for other targets (e.g. BESS direction).
+
+    tight=True adds published-history features of system tightness (reserve
+    margin rez_under, rez_over_demand). Default OFF: the oracle (F11) valued
+    *contemporaneous* tightness at -6.4, but that is future info at the gate;
+    the deployable LAGGED value gives no pinball gain (F13) — it carries real
+    marginal signal over lagged CEN (partial corr 0.19) yet is already
+    captured by the reserve-capacity prices (fx_afrr) and DA anchor. Coverage
+    nudges up ~0.01, so kept available.
     """
     h = cfg["horizon_minutes"]
     out = calendar_features(df)
@@ -264,6 +272,9 @@ def build(df: pd.DataFrame, cfg: dict, extended: bool = False,
         out = res_features(out)
     out = published_history_features(out, "y", "cen", h)
     out = published_history_features(out, "imb_energy__balance", "imb", h)
+    if tight:
+        out = published_history_features(out, "kse_snapshot__rez_under", "rezu", h)
+        out = published_history_features(out, "kse_snapshot__rez_over_demand", "rezo", h)
     if extended:
         out = extended_features(out)
     # require the anchors + published CEN history; keep partial otherwise
