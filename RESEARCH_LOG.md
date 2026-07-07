@@ -35,6 +35,35 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F15. Weather-alpha: consensus already prices the weather; the sliver that's left is untradeable
+`src/weather_res.py` — the disciplined gate before any weather trade: can a
+weather-driven RES forecast beat the CONSENSUS (published DA forecast, in the
+DA price)? Open-Meteo forecast-quality weather at 5 wind + 5 solar PL sites
+(national proxies: mean wind_speed_100m & its cube, mean GHI), 2 yr hourly,
+vs realized RES (PSE) and consensus (ENTSO-E).
+- **Linear: weather adds ~nothing** over consensus (RMSE +0.2% wind,
+  −0.2% solar). The eye-catching 0.39 corr of weather with the "residual"
+  was a **scale artifact** — consensus runs ~9% high on wind, ~5% on solar
+  (likely a definitional ENTSO-E-vs-PSE mismatch); after fitting that slope,
+  weather's corr with the proper residual is +0.08 / −0.02, explaining
+  1.9% / 0.0% of the error.
+- **Nonlinear (GBM): solar −4% (worse), wind +3%** — a small but real wind-
+  forecast edge the consensus misses.
+- **But it's untradeable**: the oracle (F11) caps *perfect* realized-RES
+  knowledge at ~1.2 pinball on CEN (DA price already holds the consensus).
+  Capturing 3% of the wind error ⇒ price edge ≲ 0.03×1.2 ≈ 0.04 pinball —
+  nil. The RES→price channel is too weak for even a genuine forecast edge to
+  pay. (No price backtest needed; the oracle bounds it to zero.)
+- Note: Open-Meteo historical-forecast weather is near-analysis quality
+  (optimistically good); a strict day-ahead lead would be *more* negative.
+
+Verdict: weather-alpha is dead, and for the deepest reason in the whole
+study — the day-ahead information set (weather included) is efficiently
+priced. Every fundamentals angle (F10 RES, F11 oracle, F13 tightness, F15
+weather) converges on the same wall. **The edge is not in forecasting; it is
+in physical participation** (BESS capacity/balancing, F8) and possibly
+balancing-process microstructure (F4/Layer 2).
+
 ### F14. Intraday sizing: real arb venue, thin MM spread; the value ladder is capacity ≫ balancing > intraday > DA
 `src/intraday_mm.py` — battery (1 MW/2 MWh) arbitrage value on each cleared
 price curve via a SoC DP (perfect-foresight ceiling + causal P25/P75
