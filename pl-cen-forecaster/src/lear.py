@@ -43,6 +43,57 @@ L1_ALPHA = 1e-3                     # LASSO strength on standardized features
 PERIODS_PER_DAY = 96
 
 
+def load_panel():
+    """Feature panel with NaNs filled — shared by holdout and walk-forward."""
+    cfg = load_cfg()
+    panel = pd.read_parquet("data/proc/panel_15min.parquet")
+    df = build_features(panel, cfg).dropna(subset=["y"]).reset_index(drop=True)
+    feats = feature_cols(df)
+    df[feats] = df[feats].astype(float)
+    df[feats] = df[feats].fillna(df[feats].median())
+    return df, feats
+
+
+def rolling_predict(df, feats, pred_days, windows, refit_every,
+                    use_vst=False) -> np.ndarray:
+    """Rolling quantile-LEAR over `pred_days` (tz-aware normalized days).
+
+    Refits every `refit_every` days on trailing `windows`; predicts each day
+    from data strictly before its gate. Returns (len(df), 5) with NaN outside
+    predicted rows.
+    """
+    ts = df["ts"]
+    X, y = df[feats].to_numpy(), df["y"].to_numpy()
+    preds = np.full((len(df), len(QUANTILES)), np.nan)
+    refit_anchor, cache = None, None
+    for d in pred_days:
+        d_utc = pd.Timestamp(d).tz_convert("UTC")
+        blk = df.index[(ts >= d_utc) & (ts < d_utc + pd.Timedelta(days=1))]
+        if len(blk) == 0:
+            continue
+        gate = ts.iloc[blk[0]]
+        if refit_anchor is None or (gate - refit_anchor).days >= refit_every:
+            refit_anchor = gate
+            tm0 = ((ts < gate) & (ts >= gate - pd.Timedelta(days=max(windows)))).to_numpy()
+            ya = y[tm0]
+            m0 = np.median(ya)
+            s0 = max(1.4826 * np.median(np.abs(ya - m0)), 1e-6)
+            cache = (m0, s0)
+        m0, s0 = cache
+        Xp = X[blk]
+        stack = []
+        for w in windows:
+            tm = ((ts < gate) & (ts >= gate - pd.Timedelta(days=w))).to_numpy()
+            if tm.sum() < 20 * PERIODS_PER_DAY:
+                continue
+            ytr = np.arcsinh((y[tm] - m0) / s0) if use_vst else y[tm]
+            raw = _fit_window(X[tm], ytr, Xp)
+            stack.append(s0 * np.sinh(raw) + m0 if use_vst else raw)
+        if stack:
+            preds[blk] = np.sort(np.mean(stack, axis=0), axis=1)
+    return preds
+
+
 def _fit_window(Xtr, ytr, Xpred):
     """Standardize, fit one QR per quantile, return VST-space predictions."""
     mu, sd = Xtr.mean(0), Xtr.std(0)
@@ -69,58 +120,13 @@ def main():
     use_vst = args.vst
     windows = [int(w) for w in args.windows.split(",")]
 
-    cfg = load_cfg()
-    panel = pd.read_parquet("data/proc/panel_15min.parquet")
-    df = build_features(panel, cfg).dropna(subset=["y"]).reset_index(drop=True)
-    feats = feature_cols(df)
-    df[feats] = df[feats].astype(float)
-    # LASSO cannot take NaNs; fill with the column median (computed causally
-    # per window would be ideal, but these are near-complete anchor columns)
-    df[feats] = df[feats].fillna(df[feats].median())
-
+    df, feats = load_panel()
     ts = df["ts"]
-    cut_hold = ts.max() - pd.Timedelta(weeks=HOLDOUT_WEEKS)
-    hold_idx = df.index[ts >= cut_hold]
-    days = sorted(ts[hold_idx].dt.tz_convert("Europe/Warsaw").dt.normalize()
-                  .unique())
-
-    X = df[feats].to_numpy()
     y = df["y"].to_numpy()
-    preds = np.full((len(df), len(QUANTILES)), np.nan)
-
-    refit_anchor = None
-    cache = None
-    for d in days:
-        d_utc = pd.Timestamp(d).tz_convert("UTC")
-        blk = df.index[(ts >= d_utc) & (ts < d_utc + pd.Timedelta(days=1))]
-        if len(blk) == 0:
-            continue
-        gate = ts.iloc[blk[0]]
-        if refit_anchor is None or (gate - refit_anchor).days >= args.refit_every:
-            refit_anchor = gate
-            # VST params from the longest calibration window
-            train_mask = (ts < gate) & (ts >= gate - pd.Timedelta(days=max(windows)))
-            ytr_all = y[train_mask.to_numpy()]
-            m0 = np.median(ytr_all)
-            s0 = max(1.4826 * np.median(np.abs(ytr_all - m0)), 1e-6)
-            cache = (m0, s0, gate)
-        m0, s0, _ = cache
-
-        Xp = X[blk]
-        vst_stack = []
-        for w in windows:
-            tm = ((ts < gate) & (ts >= gate - pd.Timedelta(days=w))).to_numpy()
-            if tm.sum() < 20 * PERIODS_PER_DAY:
-                continue
-            ytr = np.arcsinh((y[tm] - m0) / s0) if use_vst else y[tm]
-            raw = _fit_window(X[tm], ytr, Xp)
-            # invert per-window BEFORE averaging (Jensen-safe on price scale)
-            vst_stack.append(s0 * np.sinh(raw) + m0 if use_vst else raw)
-        if not vst_stack:
-            continue
-        p = np.mean(vst_stack, axis=0)                   # window avg on price
-        p = np.sort(p, axis=1)                           # rearrange
-        preds[blk] = p
+    cut_hold = ts.max() - pd.Timedelta(weeks=HOLDOUT_WEEKS)
+    days = sorted(ts[ts >= cut_hold].dt.tz_convert("Europe/Warsaw")
+                  .dt.normalize().unique())
+    preds = rolling_predict(df, feats, days, windows, args.refit_every, use_vst)
 
     # evaluate on holdout rows that got predictions
     mask = ~np.isnan(preds[:, 0])

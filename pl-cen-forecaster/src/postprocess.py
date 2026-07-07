@@ -38,15 +38,15 @@ def pinball(y: np.ndarray, pred: np.ndarray, q: float) -> float:
     return float(np.mean(np.maximum(q * d, (q - 1) * d)))
 
 
-def fit_qra(cal: pd.DataFrame) -> dict[float, QuantileRegressor]:
-    X = cal[["gbm_conf_q0.5", "b1_da"]].to_numpy()
+def fit_qra(cal: pd.DataFrame, cols: list[str]) -> dict[float, QuantileRegressor]:
+    X = cal[cols].to_numpy()
     y = cal["y"].to_numpy()
     return {q: QuantileRegressor(quantile=q, alpha=0.0, solver="highs").fit(X, y)
             for q in QUANTILES}
 
 
-def apply_qra(models: dict, test: pd.DataFrame) -> pd.DataFrame:
-    X = test[["gbm_conf_q0.5", "b1_da"]].to_numpy()
+def apply_qra(models: dict, test: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
+    X = test[cols].to_numpy()
     out = pd.DataFrame({q: models[q].predict(X) for q in QUANTILES},
                        index=test.index)
     out[:] = np.sort(out.values, axis=1)
@@ -82,20 +82,34 @@ def apply_idr(fit: tuple, test: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+LEAR_WF = pathlib.Path("reports/lear_walkforward.parquet")
+LEAR_COLS = {q: f"lear_q{q}" for q in QUANTILES}
+
+
 def main():
     wf = pd.read_parquet(WF).sort_values("ts").reset_index(drop=True)
     wf = wf.dropna(subset=["y", "gbm_conf_q0.5", "b1_da"])
+    have_lear = LEAR_WF.exists()
+    if have_lear:
+        lear = pd.read_parquet(LEAR_WF)
+        wf = wf.merge(lear, on="ts", how="inner")
+        print(f"joined LEAR member: {len(wf)} rows with both GBM and LEAR")
+    qra_cols = (["gbm_conf_q0.5", "lear_q0.5", "b1_da"] if have_lear
+                else ["gbm_conf_q0.5", "b1_da"])
     wf["week"] = wf["ts"].dt.tz_convert("Europe/Warsaw").dt.to_period("W")
 
     weeks = wf["week"].unique()
-    preds = {m: [] for m in ("QRA", "IDR-b", "Ave-Q")}
+    members = ["QRA", "IDR-b", "Ave-Q"]
+    if have_lear:
+        members += ["LEAR", "Ave-Q+LEAR"]
+    preds = {m: [] for m in members}
     kept = []
     for w in weeks[CAL_WEEKS:]:
         cal = wf[(wf["week"] >= w - CAL_WEEKS) & (wf["week"] < w)]
         test = wf[wf["week"] == w]
         if len(cal) < 2000 or test.empty:
             continue
-        qra = apply_qra(fit_qra(cal), test)
+        qra = apply_qra(fit_qra(cal, qra_cols), test, qra_cols)
         idr = apply_idr(fit_idr(cal), test)
         gbm = test[[GBM_COLS[q] for q in QUANTILES]].set_axis(
             list(QUANTILES), axis=1)
@@ -104,6 +118,13 @@ def main():
         preds["QRA"].append(qra)
         preds["IDR-b"].append(idr)
         preds["Ave-Q"].append(ave)
+        if have_lear:
+            lr = test[[LEAR_COLS[q] for q in QUANTILES]].set_axis(
+                list(QUANTILES), axis=1)
+            ave4 = (qra + idr + gbm + lr) / 4.0
+            ave4[:] = np.sort(ave4.values, axis=1)
+            preds["LEAR"].append(lr)
+            preds["Ave-Q+LEAR"].append(ave4)
         kept.append(test)
 
     test_all = pd.concat(kept)
