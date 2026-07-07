@@ -35,6 +35,38 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F10. The day-ahead price is a near-sufficient statistic for CEN at the gate — ENTSO-E fundamentals don't add
+ENTSO-E token is live (all four endpoints verified: PL day-ahead, wind/solar
+forecast, PL–DE_LU spread, imbalance prices). Built the leakage-safe RES
+feature layer (`src/pull_entsoe.py`, `features.res_features`): day-ahead
+wind/solar forecast — published D-1, so genuinely ex-ante, unlike PSE pk5l
+PV/wind which the API only serves as a post-delivery latest vintage.
+- Raw signal is real: `corr(y, fx_net_load)=+0.38` (residual demand =
+  load_fcst − RES), nearly the DA anchor's 0.47 and 2× raw load; RES
+  penetration −0.34. The GBM ranks `fx_res_wind` its #6 feature.
+- **But it does not improve the forecast.** Clean 8-week-holdout A/B (same
+  code, RES parquet hidden): with RES pinball 68.69 / CV 64.17, without RES
+  68.47 / CV 63.83 — RES is neutral-to-slightly-worse, well inside the ±11
+  CV noise. The tree merely *substitutes* RES for DA-derived features.
+  Mechanism: the market already priced the day-ahead RES forecast into
+  `fx_da`, so conditional on the anchor it is redundant.
+- **Cross-border adds nothing either**: partial corr of the residual
+  (CEN − csdac) with the PL–DE spread = −0.003, with the DE price = 0.018.
+  The 0.59 raw corr(CEN, DE) is just Europe-wide co-movement in `fx_da`.
+- **Intraday RES revision — the one signal that could beat the DA price —
+  is not published for PL** (ENTSO-E `NoMatchingDataError`).
+
+Consequence: at the D-1 / H=60 information set the predictable part of CEN
+beyond `fx_da` comes from *balancing-system state* (published CEN/imbalance
+history, reserve prices, SK contracting — all already in the panel), not
+from more day-ahead fundamentals. The 68.5→27.5 gap to PSE's final vintage
+is therefore **near-delivery** information (intraday forecast revisions,
+real-time frequency/imbalance state, generation nowcasts) — none available
+leakage-safe from these free sources. `res` is a `build()` flag, default
+OFF; kept for other targets (BESS direction may be less DA-subsumed).
+This bounds the ceiling of the day-ahead forecasting approach — a useful
+negative result, and it redirects effort away from more fundamentals.
+
 ### F9. LEAR benchmark: a linear model matches the GBM — and asinh-VST is a trap on CEN
 `src/lear.py` — Weron-style quantile LEAR: per-quantile L1-penalized linear
 quantile regression on z-scored strict features, calibration-window
@@ -243,6 +275,10 @@ Data:
 - `pull_bpkdbo.py` — per-period marginal activated price + volume-grid
   ladder snapshot from oeb-bpkdbo × eb-rozl (Project B backbone).
 - `pull_tge_rdb.py` — TGE RDB/IDA scraper (Project A intraday leg).
+- `pull_entsoe.py` / `entsoe_client.py` — ENTSO-E day-ahead RES forecast and
+  cross-border prices (token in gitignored `.env`). Feature layer
+  `features.res_features` is `build(res=True)`, default OFF — neutral for
+  CEN (F10), kept for other targets.
 - `pull_poeb_marginals.py` — legacy; its output was ladder-top stats, kept
   as `data/raw/pse_poeb_laddertop.parquet` (ladder cap/depth features).
 

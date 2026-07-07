@@ -247,13 +247,21 @@ def feature_cols(df: pd.DataFrame, extended: bool = False) -> list[str]:
     return cols
 
 
-def build(df: pd.DataFrame, cfg: dict, extended: bool = False) -> pd.DataFrame:
-    """Assemble the feature panel. Expects 'ts' and target 'y' present."""
+def build(df: pd.DataFrame, cfg: dict, extended: bool = False,
+          res: bool = False) -> pd.DataFrame:
+    """Assemble the feature panel. Expects 'ts' and target 'y' present.
+
+    res=True adds the ENTSO-E day-ahead RES / residual-demand block. Default
+    OFF: an 8-week-holdout A/B showed it neutral-to-slightly-worse for the
+    CEN point forecast — the day-ahead price already embeds the day-ahead RES
+    forecast (F10). Kept available for other targets (e.g. BESS direction).
+    """
     h = cfg["horizon_minutes"]
     out = calendar_features(df)
     out = anchor_features(out)
     out = passthrough_known_ahead(out)
-    out = res_features(out)
+    if res:
+        out = res_features(out)
     out = published_history_features(out, "y", "cen", h)
     out = published_history_features(out, "imb_energy__balance", "imb", h)
     if extended:
