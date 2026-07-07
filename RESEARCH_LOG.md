@@ -35,7 +35,55 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F23. LEAKAGE AUDIT of the spread signals — one real leak found, corrected
+Adversarial audit of F19/F21/F22 for leakage and idealization (not the
+figures, the *feasibility*). Result: **one genuine leak, now fixed; the core
+signal survives; the "carry" was an artifact.**
+
+- **LEAK (S1 calendar carry, F21)**: it read a trailing per-hour mean of
+  `cen_move` with `shift(1)`. But CEN publishes D+1 ~14:00, so at the gate
+  for any period of day D the freshest fully-published cen_move is **D-2**,
+  not D-1. Fixing to `shift(2)` collapses S1 from **Sharpe +2.12 → −0.56**.
+  → **F21's standalone calendar-carry strategy is RETRACTED** — the edge was
+  the one-day leak, not a harvestable structural premium. (CEN *does* sit
+  below DA on average, but its hour-level sign is too time-varying to harvest
+  under honest timing.) Code fixed to shift(2).
+- **CLEAN (S2 RES surprise F19, S3 load surprise)**: never use cen_move as an
+  input; use realized RES/load lagged 2.5h, gate-honest given the ENTSO-E
+  ~1.2h actuals feed. Unaffected: S2 Sharpe 3.21, S3 1.65.
+- **Corrected ensemble**: the honest 2-clean-signal pool (S2+S3) is **Sharpe
+  ~4.8** (any: 155k/MW/yr, maxDD −14k; both-agree: 105k, maxDD −6k, 24/26
+  months) — down from the leaky F22 headline of 7.10 but real. Adding
+  strict-S1 nudges majority to 5.82, but that leans on the just-caught
+  signal, so treat 4.8 as the honest number.
+
+Robustness checks that PASSED: latency 2.5h→3h holds (majority 5.9→5.7; only
+breaks at 4h) — comfortably supported by the 1.2h feed; deadband 150→500 is
+flat (Sharpe 5.8–5.9) — not overfit.
+
+Residual risks that remain (assumptions, not leakage — flagged, not fixable
+here):
+1. **Vintage of realized actuals**: the backtest uses SETTLED PSE RES/load; a
+   live system reads PRELIMINARY near-real-time actuals (revised later). Same
+   class as the CEN final-vintage trap — if preliminary ≠ settled, live
+   signal is noisier than backtested. Untested (need the real-time vintages).
+2. **Instrument feasibility**: "1 MW imbalance position every signalled
+   period" is idealized — real BRP position limits, regulator scrutiny of
+   deliberate imbalance, and market impact at scale all bite.
+3. **Cost 20 PLN/MWh** is an assumption; edge dies above ~40.
+4. **No true OOS holdout** for these strategies (unlike the CEN forecaster);
+   the 2026 softening is the only out-of-sample-flavoured evidence.
+
+Verdict: feasible in principle after the fix, with the RES-surprise (F19) as
+the one robust, clean edge (Sharpe ~3, decaying); the ensemble adds
+diversification to ~4.8; the calendar carry is dead; and the honest deployed
+number is well below the gross backtest once vintage, feasibility, and cost
+frictions are taken seriously.
+
 ### F22. Signal ensemble: composing orthogonal signals ~doubles Sharpe, halves drawdown
+> **CORRECTED by F23**: S1 leaked; honest ensemble Sharpe is ~4.8 (S2+S3), not
+> 7.10. The composition *principle* stands; the level below is pre-audit.
+
 `src/signal_ensemble.py` — the Weron distribution-averaging insight on the
 trading side. Three orthogonal, gate-honest, individually-validated signals
 on the CEN−DA spread (pairwise corr 0.01–0.06):
@@ -64,6 +112,11 @@ spot; "any" maximizes total return.
   exact level.
 
 ### F21. Structural imbalance premium + conviction-gating: best risk-adjusted result
+> **RETRACTED by F23**: the calendar-carry edge below was a `shift(1)`
+> leakage artifact (used D-1 CEN unpublished at the gate). Under honest
+> timing the calendar rule is Sharpe −0.56. The structural premium may exist
+> as a fact but is not harvestable this way. Kept for the record.
+
 Two complementary edges on the CEN−DA spread (passive balancing).
 - **Structural premium (unconditional carry)**: CEN sits systematically
   *below* DA at almost every hour (−4 to −33 PLN/MWh; 13h a +18 outlier),

@@ -48,10 +48,12 @@ def build_signals(df: pd.DataFrame) -> dict[str, np.ndarray]:
         v = df.set_index("ts")[col].shift(LAG).to_numpy()
         return np.where(v > dead, 1, np.where(v < -dead, -1, 0))
 
-    tmean = df.groupby("hour")["cen_move"].transform(
-        lambda s: s.shift(1).rolling(28, min_periods=10).mean())
+    # NB: the F21 "calendar carry" (sign of trailing per-hour cen_move) was
+    # DROPPED after the F23 leakage audit — with honest timing (shift(2); CEN
+    # publishes D+1 ~14:00 so D-2 is the freshest gate-available day) it is a
+    # losing signal (Sharpe -0.56). The pool is the two clean, gate-honest
+    # signals below (realized RES/load lagged 2.5h, never cen_move as input).
     return {
-        "S1_carry": np.nan_to_num(np.sign(tmean.to_numpy())),
         "S2_res": np.nan_to_num(-lagsign("surprise", 300)),   # over-deliver → short
         "S3_load": np.nan_to_num(lagsign("ls", 200)),          # over-demand → long
     }
@@ -121,8 +123,8 @@ def main():
               f"maxDD {r['max_dd']:>9,.0f}  months+ {r['months_pos']}")
 
     score = sum(df[k].to_numpy() for k in sigs)
-    print("\nconviction-stacked ensemble:")
-    for k, lbl in ((1, ">=1 any"), (2, ">=2 majority"), (3, "=3 all-agree")):
+    print("\nconviction-stacked ensemble (2 clean signals):")
+    for k, lbl in ((1, ">=1 any"), (2, "=2 both-agree")):
         pos = np.where(score >= k, 1, np.where(score <= -k, -1, 0))
         out["ensemble"][lbl] = perf(df, pos)
         r = out["ensemble"][lbl]

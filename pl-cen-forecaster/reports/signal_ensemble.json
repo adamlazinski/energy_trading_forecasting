@@ -2,13 +2,6 @@
   "cost": 20.0,
   "lag_periods": 10,
   "singles": {
-    "S1_carry": {
-      "ann_pln_per_mw": 82616.0,
-      "sharpe": 2.12,
-      "max_dd": -46934.0,
-      "months_pos": "18/26",
-      "n_trades": 70320
-    },
     "S2_res": {
       "ann_pln_per_mw": 122151.0,
       "sharpe": 3.25,
@@ -26,53 +19,31 @@
   },
   "ensemble": {
     ">=1 any": {
-      "ann_pln_per_mw": 207311.0,
-      "sharpe": 5.7,
-      "max_dd": -13328.0,
-      "months_pos": "25/26",
-      "n_trades": 55361
+      "ann_pln_per_mw": 158766.0,
+      "sharpe": 4.84,
+      "max_dd": -14253.0,
+      "months_pos": "23/26",
+      "n_trades": 43671
     },
-    ">=2 majority": {
-      "ann_pln_per_mw": 159471.0,
-      "sharpe": 7.1,
-      "max_dd": -11540.0,
-      "months_pos": "25/26",
-      "n_trades": 23135
-    },
-    "=3 all-agree": {
-      "ann_pln_per_mw": 83249.0,
-      "sharpe": 5.8,
-      "max_dd": -5597.0,
+    "=2 both-agree": {
+      "ann_pln_per_mw": 107089.0,
+      "sharpe": 4.86,
+      "max_dd": -6045.0,
       "months_pos": "24/26",
-      "n_trades": 6836
+      "n_trades": 12243
     }
   },
   "orthogonality": {
-    "S1_carry": {
-      "S1_carry": 1.0,
-      "S2_res": 0.06,
-      "S3_load": 0.04
-    },
     "S2_res": {
-      "S1_carry": 0.06,
       "S2_res": 1.0,
       "S3_load": -0.03
     },
     "S3_load": {
-      "S1_carry": 0.04,
       "S2_res": -0.03,
       "S3_load": 1.0
     }
   },
   "slepaczuk": {
-    "S1_carry": {
-      "ARC_pct": 3.96,
-      "ASD_pct": 1.84,
-      "MD_pct": 2.22,
-      "MLD_yr": 0.78,
-      "IR1": 2.16,
-      "IR2": 3.8
-    },
     "S2_res": {
       "ARC_pct": 5.8,
       "ASD_pct": 1.76,
@@ -90,20 +61,20 @@
       "IR2": 3.6
     },
     "majority": {
-      "ARC_pct": 7.51,
-      "ASD_pct": 1.02,
-      "MD_pct": 0.52,
+      "ARC_pct": 5.1,
+      "ASD_pct": 1.03,
+      "MD_pct": 0.3,
       "MLD_yr": 0.11,
-      "IR1": 7.33,
-      "IR2": 104.8
+      "IR1": 4.94,
+      "IR2": 84.8
     },
     "any": {
-      "ARC_pct": 9.65,
-      "ASD_pct": 1.63,
-      "MD_pct": 0.6,
-      "MLD_yr": 0.15,
-      "IR1": 5.92,
-      "IR2": 95.4
+      "ARC_pct": 7.47,
+      "ASD_pct": 1.5,
+      "MD_pct": 0.65,
+      "MLD_yr": 0.13,
+      "IR1": 4.97,
+      "IR2": 57.4
     }
   }
 }
