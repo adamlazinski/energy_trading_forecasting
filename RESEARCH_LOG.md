@@ -35,6 +35,34 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F22. Signal ensemble: composing orthogonal signals ~doubles Sharpe, halves drawdown
+`src/signal_ensemble.py` — the Weron distribution-averaging insight on the
+trading side. Three orthogonal, gate-honest, individually-validated signals
+on the CEN−DA spread (pairwise corr 0.01–0.06):
+  S1 structural carry (F21) · S2 RES surprise (F19) · S3 load surprise (new,
+  the demand-side twin — realized demand vs forecast; Sharpe 1.67 alone).
+
+| strategy | ann PLN/MW/yr | Sharpe | maxDD | months+ |
+|---|---|---|---|---|
+| best single (S2 RES) | 122k | 3.25 | −21.5k | 20/26 |
+| **≥1 any fires** | **207k** | 5.70 | −13.3k | 25/26 |
+| **≥2 majority** | 159k | **7.10** | −11.5k | 25/26 |
+| =3 all agree | 83k | 5.80 | −5.6k | 24/26 |
+
+Composition **more than doubles** the best single Sharpe (3.25→7.10) and
+**halves the drawdown** (−21.5k→−11.5k) — decorrelated diversification, from
+three economically distinct drivers. "Majority" is the risk-adjusted sweet
+spot; "any" maximizes total return.
+- **Lesson banked**: a 4th signal (spread-regime momentum) was built and
+  **dropped** — it over-trades every period for a thin edge and loses to cost
+  either sign. Not every signal belongs in the pool; validate each for sign
+  *and* cost-efficiency first.
+- Caveats: Sharpe gross of real frictions (halve for reality); passive-
+  balancing/BRP instrument; signals need the live ENTSO-E ~1.2h actuals feed;
+  F19's 2026 softening applies to the book. The conviction-threshold
+  monotonicity (Sharpe rising 3.25→5.7→7.1) is the robust takeaway, not the
+  exact level.
+
 ### F21. Structural imbalance premium + conviction-gating: best risk-adjusted result
 Two complementary edges on the CEN−DA spread (passive balancing).
 - **Structural premium (unconditional carry)**: CEN sits systematically

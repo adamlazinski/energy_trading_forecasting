@@ -1,0 +1,67 @@
+{
+  "cost": 20.0,
+  "lag_periods": 10,
+  "singles": {
+    "S1_carry": {
+      "ann_pln_per_mw": 82616.0,
+      "sharpe": 2.12,
+      "max_dd": -46934.0,
+      "months_pos": "18/26",
+      "n_trades": 70320
+    },
+    "S2_res": {
+      "ann_pln_per_mw": 122151.0,
+      "sharpe": 3.25,
+      "max_dd": -21517.0,
+      "months_pos": "20/26",
+      "n_trades": 41222
+    },
+    "S3_load": {
+      "ann_pln_per_mw": 63876.0,
+      "sharpe": 1.67,
+      "max_dd": -30412.0,
+      "months_pos": "18/26",
+      "n_trades": 46842
+    }
+  },
+  "ensemble": {
+    ">=1 any": {
+      "ann_pln_per_mw": 207311.0,
+      "sharpe": 5.7,
+      "max_dd": -13328.0,
+      "months_pos": "25/26",
+      "n_trades": 55361
+    },
+    ">=2 majority": {
+      "ann_pln_per_mw": 159471.0,
+      "sharpe": 7.1,
+      "max_dd": -11540.0,
+      "months_pos": "25/26",
+      "n_trades": 23135
+    },
+    "=3 all-agree": {
+      "ann_pln_per_mw": 83249.0,
+      "sharpe": 5.8,
+      "max_dd": -5597.0,
+      "months_pos": "24/26",
+      "n_trades": 6836
+    }
+  },
+  "orthogonality": {
+    "S1_carry": {
+      "S1_carry": 1.0,
+      "S2_res": 0.06,
+      "S3_load": 0.04
+    },
+    "S2_res": {
+      "S1_carry": 0.06,
+      "S2_res": 1.0,
+      "S3_load": -0.03
+    },
+    "S3_load": {
+      "S1_carry": 0.04,
+      "S2_res": -0.03,
+      "S3_load": 1.0
+    }
+  }
+}
