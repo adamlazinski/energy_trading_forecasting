@@ -27,6 +27,8 @@ What "available" means per source (verified empirically on the v2 API,
 """
 from __future__ import annotations
 
+import pathlib
+
 import numpy as np
 import pandas as pd
 
@@ -116,6 +118,40 @@ def passthrough_known_ahead(df: pd.DataFrame) -> pd.DataFrame:
     if "fx_load_fcst" in df:
         df["fx_load_fcst_slope"] = df["fx_load_fcst"].shift(-4) - df["fx_load_fcst"].shift(4)
     return df
+
+
+def res_features(df: pd.DataFrame) -> pd.DataFrame:
+    """ENTSO-E day-ahead RES forecast + residual demand — leakage-safe.
+
+    The day-ahead wind/solar forecast is published D-1 (~18:00 CET), so like
+    fx_da it is known at every H=60 gate of day D. Unlike PSE pk5l PV/wind
+    (latest-vintage -> xt_ quarantine), this is a genuine ex-ante forecast.
+    Residual demand fx_net_load = load_fcst - RES is the scarcity driver
+    behind CEN spikes; the solar ramp drives the evening price ramp.
+    """
+    path = pathlib.Path("data/raw/entsoe_res.parquet")
+    if not path.exists():
+        return df
+    res = pd.read_parquet(path)[["ts", "res_solar", "res_wind"]]
+    res["ts"] = pd.to_datetime(res["ts"], utc=True)
+    df = df.merge(res, on="ts", how="left")
+    df["fx_res_solar"] = pd.to_numeric(df["res_solar"], errors="coerce")
+    df["fx_res_wind"] = pd.to_numeric(df["res_wind"], errors="coerce")
+    df["fx_res_total"] = df["fx_res_solar"].fillna(0) + df["fx_res_wind"].fillna(0)
+    # ramps (per hour): sunrise/sunset and wind swings
+    df["fx_solar_slope"] = df["fx_res_solar"].shift(-4) - df["fx_res_solar"].shift(4)
+    df["fx_res_slope"] = df["fx_res_total"].shift(-4) - df["fx_res_total"].shift(4)
+    # day-relative RES (unusually windy/calm day vs its own mean)
+    loc_day = df["ts"].dt.tz_convert(WARSAW).dt.normalize()
+    day_mean = df.groupby(loc_day)["fx_res_total"].transform("mean")
+    df["fx_res_rel_day"] = df["fx_res_total"] - day_mean
+    # residual demand and RES penetration, if the load forecast is present
+    if "fx_load_fcst" in df.columns:
+        load = pd.to_numeric(df["fx_load_fcst"], errors="coerce")
+        df["fx_net_load"] = load - df["fx_res_total"]
+        df["fx_res_share"] = df["fx_res_total"] / load.clip(lower=1.0)
+        df["fx_net_load_slope"] = df["fx_net_load"].shift(-4) - df["fx_net_load"].shift(4)
+    return df.drop(columns=["res_solar", "res_wind"])
 
 
 def _availability(day: pd.Series, publish_next_day_hour: int) -> pd.Series:
@@ -217,6 +253,7 @@ def build(df: pd.DataFrame, cfg: dict, extended: bool = False) -> pd.DataFrame:
     out = calendar_features(df)
     out = anchor_features(out)
     out = passthrough_known_ahead(out)
+    out = res_features(out)
     out = published_history_features(out, "y", "cen", h)
     out = published_history_features(out, "imb_energy__balance", "imb", h)
     if extended:
