@@ -68,6 +68,7 @@ coverage 0.775 → 0.795 (`reports/postprocess_walkforward.txt`).
 | `bess_cond_model.py` | Layer 2a: P(direction) + conditional CEB_PP quantiles |
 | `bess_optimizer.py` | Layer 2b: reservation-price DP + holdout simulation |
 | `bess_layer3.py` | Layer 3: capacity (RMB) revenue stack vs energy arbitrage |
+| `bess_cooptimize.py` | net capacity after SoC-feasibility haircut (~6%, F18) |
 | `intraday_mm.py` | intraday vs DA vs balancing arb sizing; MM spread proxy (F14) |
 | `weather_res.py` | weather-alpha gate: can weather beat the RES consensus? (F15) |
 

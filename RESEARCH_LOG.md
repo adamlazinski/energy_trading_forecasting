@@ -35,6 +35,30 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F18. Co-optimization: the SoC-feasibility haircut is ~6% — F16 gross is broadly achievable
+`src/bess_cooptimize.py` — turns F8/F16's GROSS capacity revenue into a NET
+one by simulating the SoC coupling that reserving-then-getting-activated
+imposes. Single realized-data path, 2025-07→2026-07 (360 days, the aFRR
+activation span), 1 MW/2 MWh: offer up-capacity when SoC ≥ 0.4 MWh and down
+when SoC ≤ E−0.4; move SoC by realized activation (eb-rozl/zmb utilization,
+~13–14% each way); recover to a [0.7,1.3] band via CEN trades.
+- **Capacity gross 2.84M → net 2.67M PLN/MW/yr (−6.1%)**: the battery keeps
+  its reservation most of the time — only 7.4% of up-hours and **11.1% of
+  down-hours** are lost to infeasible SoC.
+- **Down-capacity is the binding constraint** — the measured +0.009/period
+  net *charging* drift slowly fills the battery, blocking down-offers and
+  forcing discharge. The physical asymmetry the gross number missed.
+- Activation energy (+864k) ≈ SoC-recovery cost (−668k), so **all-in net
+  ≈ 2.86M** — F8's "activation roughly offsets" is now measured, not assumed.
+- Robust takeaway: **the feasibility haircut is modest (~6%)**, so F16's
+  ~2.9M through-cycle gross capacity is ~2.7M net — the investment
+  order-of-magnitude holds. Caveats: activation-settlement sign depends on
+  the unverified ceb_sr convention; recovery policy is naive (discharges the
+  moment SoC exits the band regardless of price — a price-aware policy would
+  recover part of the −668k); single realized path, not stochastic; buffer/
+  band heuristic unoptimized. So the energy terms are indicative; the ~6%
+  capacity haircut is the defensible number.
+
 ### F17. LEAR in the ensemble: best CEN forecaster yet, wins every quarter
 Closes #16 / the F9 follow-up. Added the (lightened) walk-forward LEAR as an
 independent member of the postprocessing pool (`postprocess.py`, joined on
