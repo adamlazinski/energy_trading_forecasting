@@ -4,6 +4,7 @@
     56,
     84
   ],
+  "vst": false,
   "refit_every_days": 7,
   "l1_alpha": 0.001,
   "mean_pinball": 67.03,
