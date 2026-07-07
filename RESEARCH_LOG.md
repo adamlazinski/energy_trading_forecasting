@@ -35,6 +35,40 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F24. TRADE-MECHANICS AUDIT — the edge is vs day-ahead, but you can't enter there
+The signals fire ~2.5h before delivery, but the **day-ahead auction closed
+~a day earlier** (SDAC gate ~noon D-1). So the CEN−DA spread the backtest
+harvests is NOT executable at signal time — day-ahead is not an available
+entry. What you *can* trade 2.5h out is the intraday continuous market, so
+the real spread is **CEN − intraday**, not CEN − DA.
+- Re-based on the executable intraday entry (RES-surprise signal, 44,812
+  periods): edge **collapses** — Sharpe 3.0 (vs DA) → **0.7 (vs intraday) at
+  cost 20**; at cost 10, 4.1 → 2.1. |CEN−DA| 164 vs |CEN−intraday| 154
+  PLN/MWh, but the *predictable* part is what intraday absorbs.
+- Why: by the time you can act (2.5h out, intraday), the intraday market has
+  already priced the RES surprise — same real-time data, same traders. The
+  edge-vs-day-ahead is a true statistical fact but **not capturable**, because
+  DA was never the entry. Ties directly to F6 (IDA↔CEN spread decayed) and
+  the efficient-pricing wall (F10/F11).
+- Caveat *in the strategy's favor*: the intraday price used is session VWAP,
+  which includes trades up to gate — more informed than the 2.5h-out price —
+  so the true executable Sharpe is likely between 0.7 and 2.1, not pinned at
+  0.7. Still: marginal-to-untradeable as a pure financial spread at realistic
+  cost.
+- **Where the signal DOES retain value**: a physical asset (battery /
+  flexible load) that passive-balances settles the deviation at CEN against
+  its own ~zero marginal cost, not against the intraday price — so the
+  RES-surprise read is a genuine input to **BESS/flex dispatch** (the F8/F16
+  money), just not a standalone financial arb. Speed (a sub-intraday-market
+  nowcast) is the other escape — but beating the fast continuous market needs
+  real infrastructure.
+
+Net: F19/F22's numbers are the CEN−DA (non-executable) version. The
+executable, mechanics-honest edge for a pure trader is small; the durable use
+is as a dispatch signal for a flexible asset. Two audits (F23 leakage, F24
+mechanics) together move this from "Sharpe 7 strategy" to "a real fundamental
+signal that mostly lives inside the physical-asset business."
+
 ### F23. LEAKAGE AUDIT of the spread signals — one real leak found, corrected
 Adversarial audit of F19/F21/F22 for leakage and idealization (not the
 figures, the *feasibility*). Result: **one genuine leak, now fixed; the core
@@ -166,6 +200,13 @@ strongest when the border has headroom) — but the base incremental signal
 (−0.046) is small enough that a regime split is unlikely to reach tradeable.
 
 ### F19. RES-surprise persistence: the first tradeable forecast edge (intraday-weather, reframed)
+> **CORRECTED by F23 (leakage) & F24 (mechanics)**: numbers below are the
+> CEN−DA version. Day-ahead isn't an executable entry at signal time; on the
+> real intraday entry the pure-trade edge falls to Sharpe ~0.7–2.1 (F24). The
+> signal is real; its durable use is as a BESS/flex dispatch input, not a
+> standalone spread trade.
+
+
 `src/res_surprise.py` — the user's "sudden live-forecast changes" instinct,
 made concrete and POSITIVE. F10/F15 killed the day-ahead RES *forecast* (it's
 in the DA price); this trades the forecast *error*.
