@@ -1,0 +1,88 @@
+{
+  "unit": "1 MW / 2 MWh, PLN/MW/yr, gross of SoC-feasibility & fixed costs",
+  "by_quarter": [
+    {
+      "quarter": "2024Q2",
+      "cap_afrr_ann": 5645167.0,
+      "cap_best_ann": 6607158.0,
+      "afrr_g_hr": 345.0,
+      "afrr_d_hr": 300.0,
+      "energy_arb_ann": 415523.0
+    },
+    {
+      "quarter": "2024Q3",
+      "cap_afrr_ann": 3149818.0,
+      "cap_best_ann": 3712185.0,
+      "afrr_g_hr": 202.0,
+      "afrr_d_hr": 158.0,
+      "energy_arb_ann": 428472.0
+    },
+    {
+      "quarter": "2024Q4",
+      "cap_afrr_ann": 3052050.0,
+      "cap_best_ann": 3213917.0,
+      "afrr_g_hr": 208.0,
+      "afrr_d_hr": 140.0,
+      "energy_arb_ann": 234931.0
+    },
+    {
+      "quarter": "2025Q1",
+      "cap_afrr_ann": 2345264.0,
+      "cap_best_ann": 2552505.0,
+      "afrr_g_hr": 166.0,
+      "afrr_d_hr": 101.0,
+      "energy_arb_ann": 197831.0
+    },
+    {
+      "quarter": "2025Q2",
+      "cap_afrr_ann": 2987020.0,
+      "cap_best_ann": 3630009.0,
+      "afrr_g_hr": 170.0,
+      "afrr_d_hr": 171.0,
+      "energy_arb_ann": 371791.0
+    },
+    {
+      "quarter": "2025Q3",
+      "cap_afrr_ann": 2219040.0,
+      "cap_best_ann": 2483434.0,
+      "afrr_g_hr": 150.0,
+      "afrr_d_hr": 103.0,
+      "energy_arb_ann": 507085.0
+    },
+    {
+      "quarter": "2025Q4",
+      "cap_afrr_ann": 2375406.0,
+      "cap_best_ann": 2580720.0,
+      "afrr_g_hr": 162.0,
+      "afrr_d_hr": 109.0,
+      "energy_arb_ann": 411259.0
+    },
+    {
+      "quarter": "2026Q1",
+      "cap_afrr_ann": 2465968.0,
+      "cap_best_ann": 2606577.0,
+      "afrr_g_hr": 164.0,
+      "afrr_d_hr": 118.0,
+      "energy_arb_ann": 263846.0
+    },
+    {
+      "quarter": "2026Q2",
+      "cap_afrr_ann": 4238352.0,
+      "cap_best_ann": 4712381.0,
+      "afrr_g_hr": 204.0,
+      "afrr_d_hr": 280.0,
+      "energy_arb_ann": 448701.0
+    },
+    {
+      "quarter": "2026Q3",
+      "cap_afrr_ann": 3399640.0,
+      "cap_best_ann": 3827113.0,
+      "afrr_g_hr": 201.0,
+      "afrr_d_hr": 187.0,
+      "energy_arb_ann": 562622.0
+    }
+  ],
+  "cap_afrr_peak_2024h1": 4397492.0,
+  "cap_afrr_recent_3q": 3367987.0,
+  "decay_peak_to_recent_pct": -23.4
+}

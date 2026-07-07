@@ -35,6 +35,32 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F16. BESS revenue trajectory: cyclical not decaying; F8 caught a high quarter
+`src/bess_revenue_history.py` — realized per-quarter revenue for 1 MW/2 MWh
+over the full history (capacity = realized CMBP clearing prices, energy = the
+causal CEN threshold DP; no forecast needed), the robustness test of F8's
+single-8-week headline.
+- aFRR capacity (PLN/MW/yr): **5.6M (2024Q2 post-reform spike) → ~2.2–2.5M
+  trough (2025) → 4.2M (2026Q2) → 3.4M (2026Q3)**. Volatile and cyclical,
+  **not monotone decay** — the feared pipeline-entry erosion is *not yet
+  visible*; 2026 rebounded (higher volatility / PICASSO / demand).
+- **F8's 3.18M was measured in 2026Q2, a high quarter** → optimistic; the
+  through-cycle capacity figure is ~3M gross, range 2.2–4.2M (ex the 5.6M
+  reform outlier).
+- **Energy arbitrage is the stable, growing floor**: 200–563k PLN/MW/yr,
+  highest in 2026Q3 as CEN volatility rises — a natural hedge to capacity's
+  cyclicality (energy is best when prices are wild, which is also when
+  capacity can wobble).
+- Caveats unchanged from F8: gross of SoC-feasibility, fixed/connection
+  costs, and assumes dual-direction stacking permitted. The trajectory
+  *shape* is the robust takeaway, not the absolute level.
+
+Investment read: revise F8's "large but eroding cream" to **"large,
+volatile, cyclical, not yet eroding," with energy arb as a rising floor.**
+Through-cycle ~3M gross capacity + ~0.4M energy per MW, minus fixed costs and
+feasibility derates — still Europe-leading, but size it on the cycle average,
+not the 2026Q2 peak.
+
 ### F15. Weather-alpha: consensus already prices the weather; the sliver that's left is untradeable
 `src/weather_res.py` — the disciplined gate before any weather trade: can a
 weather-driven RES forecast beat the CONSENSUS (published DA forecast, in the
