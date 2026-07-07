@@ -3,3 +3,4 @@ data/proc/
 .venv/
 __pycache__/
 *.pyc
+.env
