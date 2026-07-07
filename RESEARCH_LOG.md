@@ -63,11 +63,25 @@ the real spread is **CEN − intraday**, not CEN − DA.
   nowcast) is the other escape — but beating the fast continuous market needs
   real infrastructure.
 
-Net: F19/F22's numbers are the CEN−DA (non-executable) version. The
-executable, mechanics-honest edge for a pure trader is small; the durable use
-is as a dispatch signal for a flexible asset. Two audits (F23 leakage, F24
-mechanics) together move this from "Sharpe 7 strategy" to "a real fundamental
-signal that mostly lives inside the physical-asset business."
+**Cleaner executable test (fixed-gate auction, no VWAP proxy)**: enter at the
+IDA3 clearing price (auction gates ~10:00 D, afternoon/evening delivery),
+using only the morning RES surprise available *before* that gate (05:00–08:45
+realized + 1.2h < 10:00 — leakage-clean), settle at CEN. 21,735 periods:
+- **enter at IDA3 (real): Sharpe 0.9 @cost10, −0.4 @cost20** — not tradeable.
+- enter at DA (fiction, same signal): Sharpe 3.5 / 2.4.
+- **corr(morning surprise, CEN−IDA3) = −0.026** (≈0) vs −0.061 for CEN−DA:
+  IDA3 has already priced the surprise by the time it clears. Two effects
+  compound — the pre-gate morning signal is a longer, weaker read for
+  afternoon/evening delivery, *and* the auction absorbs what remains.
+
+Net: F19/F22's numbers are the CEN−DA (non-executable) version. On any real
+entry — VWAP proxy (F24 Sharpe 0.7–2.1) or the clean IDA3 auction test
+(Sharpe 0.9→−0.4) — the pure-trader edge is small-to-negative at realistic
+cost, because the intraday market prices the surprise before you can act. The
+durable use is a dispatch signal for a flexible asset (settles vs ~0 marginal
+cost, not the market price). Two audits (F23 leakage, F24 mechanics) move
+this from "Sharpe 7 strategy" to "a real fundamental signal that lives inside
+the physical-asset business, not a standalone spread book."
 
 ### F23. LEAKAGE AUDIT of the spread signals — one real leak found, corrected
 Adversarial audit of F19/F21/F22 for leakage and idealization (not the
