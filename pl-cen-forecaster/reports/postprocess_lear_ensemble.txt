@@ -1,3 +1,8 @@
+joined LEAR member: 49075 rows with both GBM and LEAR
+/Users/adamlazinski/Desktop/energy_trading_forecasting/pl-cen-forecaster/src/postprocess.py:99: UserWarning: Converting to PeriodArray/Index representation will drop timezone information.
+  wf["week"] = wf["ts"].dt.tz_convert("Europe/Warsaw").dt.to_period("W")
+/Users/adamlazinski/Desktop/energy_trading_forecasting/pl-cen-forecaster/src/postprocess.py:139: UserWarning: Converting to PeriodArray/Index representation will drop timezone information.
+  qtr = test_all["ts"].dt.tz_convert("Europe/Warsaw").dt.to_period("Q").astype(str)
 postprocessing, walk-forward OOS n=44335  (2025-02-02 23:00:00+00:00 .. 2026-05-10 21:30:00+00:00)
 
 model     pinball  cov10-90  cov25-75

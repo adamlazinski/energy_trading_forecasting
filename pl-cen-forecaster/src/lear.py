@@ -66,7 +66,8 @@ def rolling_predict(df, feats, pred_days, windows, refit_every,
     X, y = df[feats].to_numpy(), df["y"].to_numpy()
     preds = np.full((len(df), len(QUANTILES)), np.nan)
     refit_anchor, cache = None, None
-    for d in pred_days:
+    n_refit = 0
+    for i, d in enumerate(pred_days):
         d_utc = pd.Timestamp(d).tz_convert("UTC")
         blk = df.index[(ts >= d_utc) & (ts < d_utc + pd.Timedelta(days=1))]
         if len(blk) == 0:
@@ -79,6 +80,9 @@ def rolling_predict(df, feats, pred_days, windows, refit_every,
             m0 = np.median(ya)
             s0 = max(1.4826 * np.median(np.abs(ya - m0)), 1e-6)
             cache = (m0, s0)
+            n_refit += 1
+            print(f"[lear] refit {n_refit} @ day {i+1}/{len(pred_days)} "
+                  f"({pd.Timestamp(d).date()})", flush=True)
         m0, s0 = cache
         Xp = X[blk]
         stack = []

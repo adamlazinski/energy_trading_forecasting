@@ -35,6 +35,25 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F17. LEAR in the ensemble: best CEN forecaster yet, wins every quarter
+Closes #16 / the F9 follow-up. Added the (lightened) walk-forward LEAR as an
+independent member of the postprocessing pool (`postprocess.py`, joined on
+49,075 rows), with its median also feeding the QRA regressors.
+- Walk-forward OOS (44,335 rows, 2025-02..2026-05) mean pinball:
+  GBM 63.63 · QRA 63.31 · IDR-b 66.30 · **Ave-Q 62.80 · LEAR 65.48 ·
+  Ave-Q+LEAR 62.06**. Coverage: Ave-Q+LEAR 0.795 (best, nominal 0.80).
+- **Ave-Q+LEAR is the best forecaster in the repo** — beats Ave-Q by 0.74,
+  GBM by 1.57, and wins in **all six quarters** (50.6/61.0/69.6/64.5/54.9/
+  73.9). LEAR alone is worse than the GBM (65.48) but decorrelated, so
+  distribution-averaging turns its diversity into gain — the F9 hypothesis
+  confirmed, and the F3 "averaging is the free lunch" thesis reinforced.
+- Caveat: this used the light LEAR (single 56d window, monthly refit — the
+  [56,84]/7d version took 2.7 h of LP solves for no material benefit here);
+  a fuller LEAR would likely add a touch more. Net verdict on the Weron
+  program: base learner ≈ irrelevant (F9), VST harmful (F9), fundamentals
+  priced-in (F10/F11/F13/F15) — the only durable forecast edge is
+  **model-averaging a decorrelated pool**, worth ~1.5 pinball over the GBM.
+
 ### F16. BESS revenue trajectory: cyclical not decaying; F8 caught a high quarter
 `src/bess_revenue_history.py` — realized per-quarter revenue for 1 MW/2 MWh
 over the full history (capacity = realized CMBP clearing prices, energy = the

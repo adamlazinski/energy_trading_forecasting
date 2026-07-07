@@ -19,8 +19,12 @@ import pandas as pd
 from .lear import load_panel, rolling_predict
 from .models import QUANTILES
 
-WINDOWS = (56, 84)
-REFIT_EVERY = 7
+# light config: single window, monthly refit — the [56,84]/7d version is
+# ~8x more fits and sklearn's LP-based QuantileRegressor is O(n_samples) slow
+# (2.7 h on the full span). A monthly-refit single window is an adequate
+# ensemble member for the F9/#16 diversification test.
+WINDOWS = (56,)
+REFIT_EVERY = 28
 WF = pathlib.Path("reports/walkforward_predictions.parquet")
 OUT = pathlib.Path("reports/lear_walkforward.parquet")
 
