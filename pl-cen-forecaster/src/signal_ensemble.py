@@ -57,6 +57,42 @@ def build_signals(df: pd.DataFrame) -> dict[str, np.ndarray]:
     }
 
 
+def slepaczuk_metrics(df, pos, capital: float = 2_000_000.0, N: int = 365) -> dict:
+    """Ślepaczuk-style performance suite (WNE UW algo-trading methodology).
+
+    ARC  annualized return compounded; ASD annualized std of returns;
+    MD   max drawdown (%); MLD max loss duration (years underwater);
+    IR*  = ARC/ASD  (== the P&L Sharpe with rf=0); the primary ratio.
+    IR** = sign(ARC)·ARC²/(ASD·MD)  — the drawdown-adjusted quality ratio.
+    ARC/ASD/MD scale with `capital` (a passive-balancing strategy has no NAV,
+    so a notional is assumed); IR* is scale-robust and IR** converges to the
+    C-free value ARC-equiv ann_PnL²/(ASD_PnL·MD_PnL) in the large-C regime.
+    """
+    pnl = (pos * df["cen_move"] - np.abs(pos) * COST) * MWH
+    day = df["ts"].dt.tz_convert("Europe/Warsaw").dt.normalize()
+    daily = pnl.groupby(day).sum()
+    idx = pd.date_range(daily.index.min(), daily.index.max(), freq="D",
+                        tz="Europe/Warsaw")
+    daily = daily.reindex(idx, fill_value=0.0)
+    n = len(daily)
+    eq = capital + daily.cumsum()
+    r = eq.pct_change().dropna()
+    arc = (eq.iloc[-1] / capital) ** (N / n) - 1
+    asd = float(r.std() * np.sqrt(N))
+    peak = eq.cummax()
+    md = float(-((eq - peak) / peak).min())
+    under = (eq < peak).astype(int).to_numpy()
+    mld = cur = 0
+    for u in under:
+        cur = cur + 1 if u else 0
+        mld = max(mld, cur)
+    ir1 = arc / asd if asd else 0.0
+    ir2 = np.sign(arc) * arc ** 2 / (asd * md) if (asd and md) else 0.0
+    return {"ARC_pct": round(arc * 100, 2), "ASD_pct": round(asd * 100, 2),
+            "MD_pct": round(md * 100, 2), "MLD_yr": round(mld / N, 2),
+            "IR1": round(float(ir1), 2), "IR2": round(float(ir2), 1)}
+
+
 def perf(df, pos) -> dict:
     pnl = (pos * df["cen_move"] - np.abs(pos) * COST) * MWH
     daily = pnl.groupby(df["ts"].dt.tz_convert("Europe/Warsaw").dt.date).sum().dropna()
@@ -92,6 +128,17 @@ def main():
         r = out["ensemble"][lbl]
         print(f"  {lbl:12} ann {r['ann_pln_per_mw']:>8,.0f}  Sharpe {r['sharpe']:>5}  "
               f"maxDD {r['max_dd']:>9,.0f}  months+ {r['months_pos']}  n {r['n_trades']}")
+
+    print("\nŚlepaczuk metric suite (C=2M PLN/MW notional; IR* == P&L Sharpe):")
+    print(f"  {'strategy':>14}{'IR*':>7}{'IR**':>8}{'ARC%':>7}{'ASD%':>7}{'MD%':>6}{'MLD':>6}")
+    out["slepaczuk"] = {}
+    for name, pos in (*((k, df[k].to_numpy()) for k in sigs),
+                      ("majority", np.where(score >= 2, 1, np.where(score <= -2, -1, 0))),
+                      ("any", np.where(score >= 1, 1, np.where(score <= -1, -1, 0)))):
+        m = slepaczuk_metrics(df, pos)
+        out["slepaczuk"][name] = m
+        print(f"  {name:>14}{m['IR1']:>7}{m['IR2']:>8}{m['ARC_pct']:>7}{m['ASD_pct']:>7}"
+              f"{m['MD_pct']:>6}{m['MLD_yr']:>6}")
 
     pathlib.Path("reports/signal_ensemble.json").write_text(json.dumps(out, indent=2))
     print("\nwrote reports/signal_ensemble.json")

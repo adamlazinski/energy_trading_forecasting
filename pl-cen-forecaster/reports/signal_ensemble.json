@@ -63,5 +63,47 @@
       "S2_res": -0.03,
       "S3_load": 1.0
     }
+  },
+  "slepaczuk": {
+    "S1_carry": {
+      "ARC_pct": 3.96,
+      "ASD_pct": 1.84,
+      "MD_pct": 2.22,
+      "MLD_yr": 0.78,
+      "IR1": 2.16,
+      "IR2": 3.8
+    },
+    "S2_res": {
+      "ARC_pct": 5.8,
+      "ASD_pct": 1.76,
+      "MD_pct": 1.07,
+      "MLD_yr": 0.15,
+      "IR1": 3.3,
+      "IR2": 17.9
+    },
+    "S3_load": {
+      "ARC_pct": 3.08,
+      "ASD_pct": 1.82,
+      "MD_pct": 1.44,
+      "MLD_yr": 0.47,
+      "IR1": 1.69,
+      "IR2": 3.6
+    },
+    "majority": {
+      "ARC_pct": 7.51,
+      "ASD_pct": 1.02,
+      "MD_pct": 0.52,
+      "MLD_yr": 0.11,
+      "IR1": 7.33,
+      "IR2": 104.8
+    },
+    "any": {
+      "ARC_pct": 9.65,
+      "ASD_pct": 1.63,
+      "MD_pct": 0.6,
+      "MLD_yr": 0.15,
+      "IR1": 5.92,
+      "IR2": 95.4
+    }
   }
 }
