@@ -1,0 +1,5 @@
+BESS Layer 3 stack, holdout (56 days), 1 MW / 2 MWh, sustain 0.5h (cap-hour share, forecast policy: 100%)
+energy_only      PLN/day=  1244.5 median=  1108.4 [P10    237.6, P90   2360.0] pos=100% ann/MW=454,243
+capacity_only    PLN/day=  8707.5 median=  7836.5 [P10   4589.4, P90  13858.9] pos=100% ann/MW=3,178,238
+stack_forecast   PLN/day=  8707.5 median=  7836.5 [P10   4589.4, P90  13858.9] pos=100% ann/MW=3,178,238
+stack_oracle_ub  PLN/day=  8981.9 median=  8205.5 [P10   4921.3, P90  14033.3] pos=100% ann/MW=3,278,377

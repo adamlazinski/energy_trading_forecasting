@@ -1,0 +1,44 @@
+{
+  "sustain_h": 0.5,
+  "clim_weeks": 4,
+  "mean_cap_hour_share_forecast": 1.0,
+  "note": "cap hours: best G + best D product, LER 30-min sustain bands; activation energy during cap hours excluded (v1); stack_oracle_ub ignores SoC coupling \u2014 loose upper bound",
+  "results": {
+    "energy_only": {
+      "n_days": 56,
+      "pln_per_day": 1244.5,
+      "median": 1108.4,
+      "p10": 237.6,
+      "p90": 2360.0,
+      "share_pos": 1.0,
+      "annualized_per_mw": 454243.0
+    },
+    "capacity_only": {
+      "n_days": 56,
+      "pln_per_day": 8707.5,
+      "median": 7836.5,
+      "p10": 4589.4,
+      "p90": 13858.9,
+      "share_pos": 1.0,
+      "annualized_per_mw": 3178238.0
+    },
+    "stack_forecast": {
+      "n_days": 56,
+      "pln_per_day": 8707.5,
+      "median": 7836.5,
+      "p10": 4589.4,
+      "p90": 13858.9,
+      "share_pos": 1.0,
+      "annualized_per_mw": 3178238.0
+    },
+    "stack_oracle_ub": {
+      "n_days": 56,
+      "pln_per_day": 8981.9,
+      "median": 8205.5,
+      "p10": 4921.3,
+      "p90": 14033.3,
+      "share_pos": 1.0,
+      "annualized_per_mw": 3278377.0
+    }
+  }
+}

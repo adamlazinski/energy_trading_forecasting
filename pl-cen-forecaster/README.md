@@ -64,6 +64,7 @@ coverage 0.775 → 0.795 (`reports/postprocess_walkforward.txt`).
 | `bess_activation.py` | Project B Layer 1: dispatcher activation curves |
 | `bess_cond_model.py` | Layer 2a: P(direction) + conditional CEB_PP quantiles |
 | `bess_optimizer.py` | Layer 2b: reservation-price DP + holdout simulation |
+| `bess_layer3.py` | Layer 3: capacity (RMB) revenue stack vs energy arbitrage |
 
 Long pulls (`pull_bpkdbo`, `pull_tge_rdb`, `pull_poeb_marginals`) are
 day-by-day, checkpointed, and safe to re-run — they skip days already in

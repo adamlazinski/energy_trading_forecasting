@@ -35,6 +35,38 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F8. Layer 3: capacity (RMB) dominates the BESS stack ~7:1 — and matches Modo's independent benchmark
+`src/bess_layer3.py`, holdout (56 days, 1 MW / 2 MWh):
+- **capacity_only ≈ stack ≈ 8,708 PLN/day (ann. 3.18M PLN/MW)** vs
+  energy_only 1,244. The honest forecast-based mode chooser picks capacity
+  in 100% of hours — the DP's marginal energy value of an hour (~tens of
+  PLN) never beats aFRR G+D capacity prices (mean 325 PLN/MW/h on the
+  holdout; 250–650 in *every* quarter since the reform — not a window
+  fluke).
+- **Activation obligation quantified** (eb-rozl × zmb): ~13–14% mean
+  utilization both directions → ~3.3 MWh/day cycled each way per procured
+  MW, net drift ≈ −0.2 MWh/day. The activation energy itself settles at a
+  *positive* margin (up at ceb_sr ~452, down at ~347 → +266 PLN/day)
+  against 320–650 PLN/day cycling cost — net −50..−380 PLN/day, noise vs
+  capacity revenue. The v1 "excluded, roughly offsetting" assumption is
+  now measured.
+- **External cross-check**: Modo Energy (May 2026) puts a 2h Polish BESS
+  at >€800k/MW/yr annualized (≈3.4M PLN) with aFRR ~€120/MW/h ≈ 500
+  PLN/MW/h; our same-window bottom-up numbers are 3.18M PLN/MW/yr and 484
+  PLN/MW/h (2026Q2 aFRR G+D mean). Independent agreement to within ~7%.
+- LER assumption: 30-min full-power sustain per direction (SUSTAIN_H=0.5,
+  bands [0.53, 1.53] MWh for dual-direction provision on 2 MWh).
+- **PICASSO pzeb verified as NOT a currency artifact**: ceb_sr/pzeb ratio
+  median 13.6, IQR [7, 28] (an EUR quote would give a tight ~4.3).
+  Semantics remain undocumented → zeb-rozl stays quarantined.
+- Haircuts a real project takes on the 3.18M: dual-direction co-provision
+  from one inverter must be permitted (else ~halve); prequalification/LER
+  derating; and above all **entry compression** — these prices exist
+  because prequalified supply is scarce; the 4 GWh+ Polish BESS pipeline
+  is aimed straight at them (they already fell ~2x from 2024Q2 to 2025).
+  The energy-arbitrage layer (F7) is the durable floor under that decay;
+  the capacity layer is the (large, eroding) cream.
+
 ### F7. BESS Layer 2: settlement rules pinned down; conditional policy ~1,240 PLN/day per 1 MW / 2 MWh on holdout
 Rules established from PSE's WDB training deck (Jan 2024, fetched from
 pse.pl; local copy of key facts below) and *verified in our data*:
