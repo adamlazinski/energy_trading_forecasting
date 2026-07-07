@@ -63,6 +63,14 @@ in the DA price); this trades the forecast *error*.
   must use the ENTSO-E actual-gen feed (~1.2h) with forecast/actual from the
   *same* provider to avoid the F15 scale bias; (4) cost-sensitive.
 
+**Value-of-speed curve** (annualized PLN/MW/yr @ cost 20, the recruitment
+pitch): 0h **258k** (ceiling) · 1h **226k** · 1.5h 192k · 2h 156k · 2.5h
+**120k** (free ENTSO-E actuals) · 3h 89k · 4h 27k · 6h −33k. The edge is
+~linear in latency in the 1–3h band (~60–70k/MW/yr per hour), so a live
+nowcast to ~1h roughly **doubles** the free-data edge (+106k speed premium).
+The pitch: "free data → ~120k/MW/yr; a fast satellite/SCADA feed → ~226k;
+here's the curve." Chart artifact rendered for a deck.
+
 First genuine forecast edge in the project, and it *redeems the weather
 thread*: not by beating the market's forecast (F15 says we can't), but by
 being **fast on the realized error** — the one near-delivery signal the
