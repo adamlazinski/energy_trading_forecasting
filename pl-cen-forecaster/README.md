@@ -57,6 +57,7 @@ coverage 0.775 → 0.795 (`reports/postprocess_walkforward.txt`).
 |---|---|
 | `walkforward.py` | expanding-window OOS predictions — the honest test bed |
 | `postprocess.py` | QRA / IDR / distribution averaging on those predictions |
+| `lear.py` | Weron LEAR benchmark (linear ≈ GBM; asinh-VST is a trap, F9) |
 | `backtest_spread.py` | DA↔CEN threshold rule (edge existed, died 2025-09-30) |
 | `pull_tge_rdb.py` | TGE RDB continuous + IDA1/2/3 auction results scraper |
 | `backtest_spread_ida.py` | same rule vs the *tradeable* intraday legs |

@@ -1,0 +1,4 @@
+LEAR (windows=[56, 84]d, refit/7d, L1=0.001) holdout n=5377
+  mean pinball = 67.03  per-q={'0.1': 56.67, '0.25': 83.47, '0.5': 87.23, '0.75': 67.91, '0.9': 39.85}
+  coverage P10-90=0.738 P25-75=0.472
+  (GBM+hour-conformal reference: 68.5 / 0.76)

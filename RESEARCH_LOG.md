@@ -35,6 +35,36 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F9. LEAR benchmark: a linear model matches the GBM — and asinh-VST is a trap on CEN
+`src/lear.py` — Weron-style quantile LEAR: per-quantile L1-penalized linear
+quantile regression on z-scored strict features, calibration-window
+averaging (56 & 84 d), rolling refit every 7 d, same 8-week holdout.
+- **LEAR (price target): mean pinball 67.0, coverage 0.74** — essentially
+  matches, marginally beats, the tuned **GBM+hour-conformal (68.5 / 0.76)**.
+  So on CEN the tree's non-linearity/interactions buy almost nothing; the
+  signal is largely **linear** in the anchor + published-history features.
+  The GBM keeps only a thin coverage edge, and that comes from its
+  conformal step (which LEAR doesn't have yet), not from the base model.
+- **asinh-VST is pathological here**: the same LEAR on the VST target
+  scores **133** (2x worse), with a tell-tale high-bias per-quantile shape
+  (q0.25≈q0.5≈185 falling to q0.9≈110). Cause: CEN's ±45k spikes make the
+  `sinh` *inverse* extrapolate and detonate a handful of predictions.
+  Invert-before-average vs after barely changed it (135 vs 133) — it's the
+  inverse itself, not the averaging. This retro-explains F3 (VST "a wash"
+  for the GBM): trees predict inside the training range and clip the
+  blow-up; a linear model extrapolates and explodes. **Lesson: VST is for
+  bounded heavy tails (day-ahead), not for spiking balancing prices.** The
+  `--vst` flag is kept for diagnostics only; default is the price target.
+- Implication (queued): the real win isn't picking GBM *or* LEAR but
+  averaging them — our postprocess.py QRA/Vincentization pool (F3)
+  currently holds only GBM-derived members; adding an independent LEAR
+  member is exactly the diversification distribution-averaging rewards.
+
+This closes the Weron thread (task #13): asinh-VST (F3, and F9 negative),
+QRA + IDR + distribution averaging (F3), LEAR (F9). Net verdict: **the
+free lunch on CEN is postprocessing/averaging, not the base learner or the
+VST** — consistent with Lipiecki/Uniejewski/Weron (2024).
+
 ### F8. Layer 3: capacity (RMB) dominates the BESS stack ~7:1 — and matches Modo's independent benchmark
 `src/bess_layer3.py`, holdout (56 days, 1 MW / 2 MWh):
 - **capacity_only ≈ stack ≈ 8,708 PLN/day (ann. 3.18M PLN/MW)** vs
