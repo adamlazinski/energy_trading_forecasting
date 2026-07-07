@@ -71,6 +71,7 @@ coverage 0.775 → 0.795 (`reports/postprocess_walkforward.txt`).
 | `bess_cooptimize.py` | net capacity after SoC-feasibility haircut (~6%, F18) |
 | `intraday_mm.py` | intraday vs DA vs balancing arb sizing; MM spread proxy (F14) |
 | `weather_res.py` | weather-alpha gate: can weather beat the RES consensus? (F15) |
+| `res_surprise.py` | RES-surprise persistence → CEN spread signal — tradeable (F19) |
 
 Long pulls (`pull_bpkdbo`, `pull_tge_rdb`, `pull_poeb_marginals`) are
 day-by-day, checkpointed, and safe to re-run — they skip days already in

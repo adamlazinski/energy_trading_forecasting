@@ -35,6 +35,41 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F19. RES-surprise persistence: the first tradeable forecast edge (intraday-weather, reframed)
+`src/res_surprise.py` — the user's "sudden live-forecast changes" instinct,
+made concrete and POSITIVE. F10/F15 killed the day-ahead RES *forecast* (it's
+in the DA price); this trades the forecast *error*.
+- **Mechanism (ceiling)**: the RES surprise (realized − day-ahead consensus)
+  moves CEN vs DA — slope **−56 PLN/MWh per GW**, and gets the *sign* right
+  **71%** of the time (more RES than expected ⇒ CEN below DA). Weaker on the
+  continuous intraday (55% sign) — balancing is far more imbalance-sensitive.
+- **Why it's tradeable without forecasting the surprise**: the surprise is
+  strongly persistent — autocorr **0.90 @1h, 0.76 @2h, 0.62 day-level**. So
+  the surprise you've *already observed* predicts the upcoming move almost as
+  well as the contemporaneous one; you ride the persistent bias.
+- **Deployable**: ENTSO-E actual PL wind/solar publishes at **~1.2h latency**
+  (verified live), so at the gate (t−60min) you know the surprise ~2–2.5h
+  back — the strong regime.
+- **Gate-honest P&L** (short CEN−DA when RES over-delivers, deadband 300 MW):
+  at **2.5h lag, cost 20 PLN/MWh: +24/trade, 9/10 quarters positive,
+  ~+984k** over 2 yr; at 2h lag, +31/trade, 10/10 quarters. Degrades with
+  latency (4h ≈ marginal) and cost (dies above ~40 PLN/MWh).
+- Caveats, load-bearing: (1) **hit rate ~50%** — profit is payoff-skew, not
+  frequency, so tails dominate and realized P&L is lumpy → needs strict
+  sizing; (2) the instrument is CEN−DA, i.e. **passive-balancing / imbalance
+  positioning** — needs BRP status or spread access, and F6 warns spread
+  regimes can shift (though this held every quarter incl. 2026); (3) the
+  backtest sourced the surprise from PSE actuals (3–4 d lag) — a live system
+  must use the ENTSO-E actual-gen feed (~1.2h) with forecast/actual from the
+  *same* provider to avoid the F15 scale bias; (4) cost-sensitive.
+
+First genuine forecast edge in the project, and it *redeems the weather
+thread*: not by beating the market's forecast (F15 says we can't), but by
+being **fast on the realized error** — the one near-delivery signal the
+efficient day-ahead price cannot contain. Live weather (the original idea)
+would be an even-earlier, independent read that could push latency below the
+1.2h actuals feed — the natural enhancement.
+
 ### F18. Co-optimization: the SoC-feasibility haircut is ~6% — F16 gross is broadly achievable
 `src/bess_cooptimize.py` — turns F8/F16's GROSS capacity revenue into a NET
 one by simulating the SoC coupling that reserving-then-getting-activated
