@@ -1,0 +1,11 @@
+{
+  "lambda_hour": 0.0,
+  "lambda_block": 0.0,
+  "base_pinball": 68.46,
+  "base_cov": 0.763,
+  "reconciled_pinball": 68.46,
+  "reconciled_cov": 0.763,
+  "delta": 0.0,
+  "median_pinball_base": 92.01,
+  "median_pinball_recon": 92.01
+}

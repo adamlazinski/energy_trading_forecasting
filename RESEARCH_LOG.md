@@ -35,6 +35,56 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F12. Temporal hierarchy (THieF): no gain — the GBM is already temporally coherent
+`src/temporal_hierarchy.py` — forecast CEN's hourly and 4-hour-block means
+with their own GBMs and reconcile the 15-min median onto them (calibration-
+tuned weights λ_hour, λ_block ∈ [0,1]), keeping the conformal spread as the
+within-level shape.
+- **Calibration drove λ_hour = λ_block = 0**: the tuner chose to ignore the
+  aggregates entirely; reconciled pinball = base pinball = 68.46 exactly.
+- Diagnosed the *why* (not a broken aggregate model): at the hourly level a
+  dedicated hourly GBM scores MAE 169.0 vs the bottom GBM's own predictions
+  averaged to hourly 168.0 — indistinguishable, and the two forecasts
+  correlate 0.98. The aggregate carries no independent information.
+- Mechanism: temporal hierarchies pay off when each level is fit by a
+  simple model (ARIMA) blind to cross-level structure; reconciliation
+  restores coherence. Our GBM already conditions on qh-of-day + smooth
+  anchors, so it is coherent by construction and there is nothing to
+  reconcile. A negative result specific to feature-rich learners.
+
+### F11. Oracle study: fundamentals are ~worthless for CEN except system tightness; the ceiling is the balancing process itself
+`src/oracle_study.py` — a deliberately LEAKAGE-VIOLATING ceiling study:
+give the GBM *realized* actuals (known only post-delivery) and measure the
+8-week-holdout pinball. Answers "if we knew the exact conditions, how much
+better?" and hence whether modelling fundamentals separately is worthwhile.
+
+| perfectly known | pinball | Δ vs strict 68.46 |
+|---|---|---|
+| realized RES (wind+solar) | 67.23 | −1.2 |
+| realized load | 67.41 | −1.1 |
+| realized net-load | 67.60 | −0.9 |
+| realized cross-border | 67.84 | −0.6 |
+| **realized system tightness** | **62.08** | **−6.4** |
+| all oracle | 62.48 | −6.0 |
+
+- **Modelling wind/sun/load separately is a dead end.** Even *perfect*
+  knowledge of each buys ~1 pinball point — the day-ahead price already
+  embeds the fundamentals (F10, now confirmed on actuals, not just
+  forecasts). Reconstructing them is reconstructing what `fx_da` contains.
+- **System tightness is the only fundamental that matters**: realized
+  reserve margins (`rez_under`, `rez_over_demand`) + non-activated
+  generation (`gen_not_activ_part`) are worth −6.4 and dominate the whole
+  oracle set (all-oracle is *worse* than tight-alone, 62.48 vs 62.08 — the
+  useless features add noise). This is the info the DA price can't hold and
+  that drives balancing spikes. **Actionable target: nowcast the reserve
+  margin** — the single highest-value forecasting object we've identified.
+- **The ceiling is not fundamentals.** Even perfect tightness reaches only
+  62, vs PSE's final-vintage 27.5. The 62→27.5 residual is the balancing
+  *process* — which offers get activated, CKOEB/aFRR corrections — a
+  discretionary/mechanical layer no observable fundamental explains. So
+  the achievable edge from better fundamentals forecasting is ~6 pinball
+  points, not 40.
+
 ### F10. The day-ahead price is a near-sufficient statistic for CEN at the gate — ENTSO-E fundamentals don't add
 ENTSO-E token is live (all four endpoints verified: PL day-ahead, wind/solar
 forecast, PL–DE_LU spread, imbalance prices). Built the leakage-safe RES

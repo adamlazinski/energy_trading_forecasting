@@ -1,0 +1,42 @@
+{
+  "baseline_strict": 68.46,
+  "pse_final_vintage": 27.47,
+  "ladder": {
+    "strict": {
+      "mean_pinball": 68.46,
+      "cov_P10_90": 0.763,
+      "n_feats": 47
+    },
+    "+perfect_RES": {
+      "mean_pinball": 67.23,
+      "cov_P10_90": 0.783,
+      "n_feats": 49
+    },
+    "+perfect_load": {
+      "mean_pinball": 67.41,
+      "cov_P10_90": 0.774,
+      "n_feats": 48
+    },
+    "+perfect_netload": {
+      "mean_pinball": 67.6,
+      "cov_P10_90": 0.774,
+      "n_feats": 48
+    },
+    "+perfect_tight": {
+      "mean_pinball": 62.08,
+      "cov_P10_90": 0.797,
+      "n_feats": 50
+    },
+    "+perfect_xborder": {
+      "mean_pinball": 67.84,
+      "cov_P10_90": 0.777,
+      "n_feats": 48
+    },
+    "+all_oracle": {
+      "mean_pinball": 62.48,
+      "cov_P10_90": 0.785,
+      "n_feats": 55
+    }
+  },
+  "note": "LEAKAGE-VIOLATING oracle study; ora_ = realized actuals"
+}
