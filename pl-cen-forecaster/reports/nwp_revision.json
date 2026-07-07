@@ -1,0 +1,42 @@
+{
+  "trades": {
+    "A_cost5": {
+      "n_trades": 7107,
+      "pnl_per_mwh": 7.9,
+      "hit": 0.502,
+      "ann_pln_per_mw": 11066.0,
+      "sharpe": 1.68
+    },
+    "A_cost10": {
+      "n_trades": 7107,
+      "pnl_per_mwh": 2.9,
+      "hit": 0.477,
+      "ann_pln_per_mw": 4078.0,
+      "sharpe": 0.62
+    },
+    "A_cost20": {
+      "n_trades": 7107,
+      "pnl_per_mwh": -7.1,
+      "hit": 0.431,
+      "ann_pln_per_mw": -9899.0,
+      "sharpe": -1.51
+    },
+    "B_cost10": {
+      "n_trades": 7459,
+      "pnl_per_mwh": -2.4,
+      "hit": 0.503,
+      "ann_pln_per_mw": -3458.0,
+      "sharpe": -0.26
+    },
+    "B_cost20": {
+      "n_trades": 7459,
+      "pnl_per_mwh": -12.4,
+      "hit": 0.481,
+      "ann_pln_per_mw": -18002.0,
+      "sharpe": -1.35
+    }
+  },
+  "corr_rev21_m32": -0.072,
+  "corr_rev10_m32": -0.109,
+  "corr_rev10_mc3": -0.014
+}

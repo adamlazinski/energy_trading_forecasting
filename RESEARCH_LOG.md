@@ -35,6 +35,61 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F26. NWP run-to-run revision: the manufactured intraday forecast revision is a REAL signal, but the executable edge is quarter-concentrated
+`src/nwp_revision.py` — F10 lamented that PL publishes no intraday RES-
+forecast revision; we manufactured one from consecutive NWP runs (Open-Meteo
+Previous Runs API, same 5+5 national-proxy sites as F15; wind in v³ power
+terms + GHI, z-scored on the first 30% only, cached
+`data/raw/weather_prev_runs.parquet`). Two revisions per delivery hour:
+rev21 = day-1 − day-2 runs (run at D-1 h, so with ~2h availability lag it is
+known before the 22:00 IDA2 gate for h ≤ 19 — STRICT) and rev10 = latest −
+day-1 (latest-run vintage can post-date the 10:00 IDA3 gate — CEILING only).
+- **The mechanism is real and right-signed**: corr(rev21, IDA3−IDA2) =
+  −0.072; the fresher rev10 gets −0.109 (fresher revision → stronger read,
+  as it should). This is the first *executable-structure* signal in the
+  program with a nontrivial correlation — realized-surprise had ≈0 (F25).
+- **CEN−IDA3 absorbs even the freshest revision**: corr(rev10, CEN−IDA3) =
+  −0.014 ≈ 0 — F24 confirmed from a second, independent direction: by the
+  time the last auction clears, the balancing spread holds nothing public.
+- **Strict trade (enter IDA2, exit IDA3, h≤19, 22,238 joint periods
+  25Q1–26Q3)**: net pnl/MWh monotone in conviction (deadband 0.5→2.0σ:
+  +0.6→+13.0 @cost5), Sharpe 1.68–1.94 @5 PLN round-trip (auction legs pay
+  fees only, no bid-ask, so ~5 RT is realistic), ~0.6–1.2 @10.
+- **BUT quarter-concentrated → not deployable**: 3–4/7 quarters positive at
+  every setting; the P&L is 25Q3 + 26Q2, with 26Q1 consistently negative.
+  By hard rule #3 that's a fail. Verdict: a real, novel, gate-honest signal
+  worth keeping as a *feature* (forecaster tails; BESS dispatch tilt) and as
+  live-collection material — not a standalone book on this evidence.
+- Assumption flagged: Open-Meteo "previous_day1" = run ~24h before delivery
+  with a ~2h availability lag; if the true lag is longer the h≤19 filter
+  needs tightening.
+
+### F25. Auction-to-auction spreads (the fully-executable structure): dead
+`src/ida_term.py` — the F24 guardrail applied by construction: enter one IDA
+auction, exit a later one (two real prints, costs on BOTH legs), signal
+strictly pre-dating the entry gate. Pairs: IDA1→IDA2, IDA1→IDA3 (signal =
+D-1 09:00–13:30 realized RES surprise, legal at the 15:00 gate), IDA2→IDA3
+(signal = D-1 16:00–20:30 surprise, legal at 22:00), and IDA2→IDA3 off the
+IDA1−DA basis (IDA1 clears 15:00 D-1, legal). 43.5k/21.7k/22.2k joint
+periods; liquidity checked (IDA1 median 160 MWh/period, IDA3 54 — fine at
+1 MW, and also the strategy's capacity ceiling).
+- **All dead.** corr(signal, exit−entry) = ±0.02–0.06; gross edge +1.5 to
+  +6.8 PLN/MWh — below even a 5 PLN round trip everywhere except the basis-
+  reversion variant (Sharpe 0.38 @cost5, 5/7 quarters — noise). Deadband
+  sweeps don't rescue it; the b1 tail (Sharpe 1.08 at 528 trades, 2/4
+  quarters) is curve-fit.
+- Interpretation: day-level surprise persistence (0.62) is too slow a
+  carrier — whatever it implies for day D is in the *first* auction you can
+  trade, so there is nothing left between auctions. The auctions are
+  informationally efficient against all public fixed-schedule data we hold.
+  Combined with F24 (CEN legs) this closes the class: **no spread among
+  {DA, IDA1, IDA2, IDA3, CEN} is tradeable from published-history signals.**
+  What survived the guardrail: the NWP revision (F26) — new information, not
+  a lag of old information.
+- Side fact (checked): `poeb-rbn` offers publish ~20 min AFTER delivery
+  starts (0% gate-legal live) — the offer ladder can enter models only
+  lagged ≥1 day (offers are D-1-committed and sticky, so still informative).
+
 ### F24. TRADE-MECHANICS AUDIT — the edge is vs day-ahead, but you can't enter there
 The signals fire ~2.5h before delivery, but the **day-ahead auction closed
 ~a day earlier** (SDAC gate ~noon D-1). So the CEN−DA spread the backtest
@@ -750,6 +805,10 @@ Strategy / analysis:
 - `bess_activation.py` — Layer 1 v1: direction frequencies, marginal-price
   distributions by block × direction, activation curves
   π_up(p|block) = P(dir=G ∧ marg ≥ p), quarterly regime table.
+- `ida_term.py` — fully-executable auction-to-auction spreads (F25: dead).
+- `nwp_revision.py` — NWP run-to-run RES-forecast revision vs the IDA/CEN
+  chain (F26: real signal, quarter-concentrated edge; keeps the Previous
+  Runs cache `weather_prev_runs.parquet`).
 - `report_figs.py` — report figures.
 
 ## In flight right now (2026-07-06 evening)
