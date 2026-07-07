@@ -35,6 +35,31 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F21. Structural imbalance premium + conviction-gating: best risk-adjusted result
+Two complementary edges on the CEN−DA spread (passive balancing).
+- **Structural premium (unconditional carry)**: CEN sits systematically
+  *below* DA at almost every hour (−4 to −33 PLN/MWh; 13h a +18 outlier),
+  sign-stable ~67% across quarters. Economic story: the system is
+  structurally long — conservative scheduling + the RES over-forecast bias
+  (F15) — so the imbalance price clears under day-ahead. A leakage-safe
+  **calendar rule** (trailing 28-obs per-hour mean → position sign) harvests
+  **82.6k PLN/MW/yr, Sharpe 2.12** at cost 20, no forecasting. Cost-sensitive
+  (trades every period: 257k/Sharpe 6.6 gross → 82.6k/2.12 after cost).
+- **Conviction gating (the nice part)**: calendar carry and the F19 RES-
+  surprise are different signals, so trading only when they AGREE:
+
+  | strategy | ann PLN/MW/yr | Sharpe | trades |
+  |---|---|---|---|
+  | calendar alone | 82.6k | 2.12 | 70.6k |
+  | F19 alone | 122k | 3.25 | 41.2k |
+  | **both-agree** | **148k** | **6.05** | 20.8k |
+
+  Filtering to the ~21k high-conviction periods ~doubles the Sharpe of either
+  alone — the "portfolio of signals + conviction filter" that a desk actually
+  runs, demonstrated. Caveats: Sharpe gross of real frictions; same passive-
+  balancing/BRP instrument; and F19's 2026 softening (F19 addendum) applies
+  to the combined book too.
+
 ### F20. Cross-border RES spillover: real mechanism, redundant alpha, no tradeable lead
 Tested the F19 idea across the DE→PL border (German RES surprise from ENTSO-E
 DE_LU forecast vs actual gen, 2025; `data/raw/de_res_surprise.parquet`).
