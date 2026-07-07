@@ -63,6 +63,17 @@ in the DA price); this trades the forecast *error*.
   must use the ENTSO-E actual-gen feed (~1.2h) with forecast/actual from the
   *same* provider to avoid the F15 scale bias; (4) cost-sensitive.
 
+**Risk/return (2.5h latency, cost 20, 1 MW, 2.1 yr)**: ann. P&L 122k PLN/MW,
+ann. vol 38k, **P&L Sharpe 3.25**, max drawdown −21.5k (return/DD 5.7×/yr),
+daily hit 56%, top-10 days only 14% of gross → **diversified, not tail-
+concentrated** (correcting the earlier over-cautious "lumpy/tail-driven"
+read). Stability: 20/26 months positive, first-half ≈ second-half mean
+(9.5k/mo each). BUT a yellow flag — 2026 is softening: quarterly P&L 2024Q4–
+2025 ran 35–47k, 2026Q2 fell to 14k (2026Q3 partial). Consistent with the
+F2/F6 lesson that edges erode as the market prices the signal; too early to
+call death, worth watching. Sharpe is gross of real frictions (execution,
+the ENTSO-E-vs-PSE actuals substitution, position limits, impact at scale).
+
 **Value-of-speed curve** (annualized PLN/MW/yr @ cost 20, the recruitment
 pitch): 0h **258k** (ceiling) · 1h **226k** · 1.5h 192k · 2h 156k · 2.5h
 **120k** (free ENTSO-E actuals) · 3h 89k · 4h 27k · 6h −33k. The edge is
