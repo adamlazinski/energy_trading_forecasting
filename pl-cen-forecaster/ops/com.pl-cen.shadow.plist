@@ -21,8 +21,10 @@
         <string>-m</string>
         <string>src.shadow_cmbp</string>
     </array>
+    <!-- Mac clock runs UK time; 06:20 London == 07:20 Warsaw year-round
+         (UK and EU switch DST on the same Sundays) -->
     <key>StartCalendarInterval</key>
-    <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>20</integer></dict>
+    <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>20</integer></dict>
     <key>StandardErrorPath</key>
     <string>/Users/adamlazinski/.pl-cen-collector/data/shadow/launchd.err</string>
     <key>StandardOutPath</key><string>/dev/null</string>
