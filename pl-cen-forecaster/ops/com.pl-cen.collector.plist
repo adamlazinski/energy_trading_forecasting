@@ -1,28 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  Live vintage collector (src/live_collector.py), every 15 min while awake.
+  Live vintage collector, every 15 min while awake.
+
+  Runs from ~/.pl-cen-collector (a verbatim copy of src/pse_client.py +
+  src/live_collector.py with its own venv), NOT from the repo: the repo sits
+  under ~/Desktop, which macOS TCC protects — a launchd agent touching it
+  hangs at interpreter startup waiting for a consent prompt that background
+  processes never get. The store lives at ~/.pl-cen-collector/data/live and
+  the repo's data/live is a symlink to it, so analysis paths are unchanged.
+  After editing collector code: cp src/{pse_client,live_collector}.py
+  ~/.pl-cen-collector/src/ and relaunch.
+
   Install:  cp ops/com.pl-cen.collector.plist ~/Library/LaunchAgents/ &&
             launchctl load ~/Library/LaunchAgents/com.pl-cen.collector.plist
   Remove:   launchctl unload ~/Library/LaunchAgents/com.pl-cen.collector.plist &&
             rm ~/Library/LaunchAgents/com.pl-cen.collector.plist
-  Uptime log = capture_ts gaps in data/live/; stderr lands in data/live/launchd.err.
 -->
 <plist version="1.0">
 <dict>
     <key>Label</key><string>com.pl-cen.collector</string>
     <key>WorkingDirectory</key>
-    <string>/Users/adamlazinski/Desktop/energy_trading_forecasting/pl-cen-forecaster</string>
+    <string>/Users/adamlazinski/.pl-cen-collector</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/adamlazinski/Desktop/energy_trading_forecasting/pl-cen-forecaster/.venv/bin/python</string>
+        <string>/Users/adamlazinski/.pl-cen-collector/.venv/bin/python</string>
         <string>-m</string>
         <string>src.live_collector</string>
     </array>
     <key>StartInterval</key><integer>900</integer>
     <key>RunAtLoad</key><true/>
     <key>StandardErrorPath</key>
-    <string>/Users/adamlazinski/Desktop/energy_trading_forecasting/pl-cen-forecaster/data/live/launchd.err</string>
+    <string>/Users/adamlazinski/.pl-cen-collector/data/live/launchd.err</string>
     <key>StandardOutPath</key><string>/dev/null</string>
     <key>LowPriorityIO</key><true/>
     <key>ProcessType</key><string>Background</string>
