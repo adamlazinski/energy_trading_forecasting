@@ -35,6 +35,38 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F27. Price-aware SoC recovery: the CEN forecaster's first positive-every-quarter monetization — and proof the F18 drag is mostly structural
+`src/bess_soc_policy.py` — F18's stack pays −668k PLN/MW/yr for price-blind
+SoC recovery (trade the instant the band is crossed). The forecaster's 60-min
+horizon makes a timing window gate-honest by construction: at decision time t
+the OOS forecasts for deliveries t..t+3 were all issued ≤ t. Policy: defer the
+recovery to the best forecast-median quarter-hour within the window; cancel if
+activation drift re-enters the band; emergency-execute near physical limits.
+Same realized path as `bess_cooptimize` (2025-07→2026-07, LEAR walk-forward +
+GBM holdout medians, 100% coverage).
+- **Window sweep {2,3,4} picks 30 min** — a mechanism, not tuning: waiting
+  out-of-band lets activation drift SoC toward the physical limits and
+  forfeits capacity offers, and that cost grows faster than the timing gain
+  (fcst net 2.90M/2.87M/2.87M at W=2/3/4 vs 2.86M blind).
+- **@W=2: recovery leg −668k → −553k (fcst), −422k (oracle)** — the real
+  forecast captures 46% of the oracle's timing value on the leg. Net stack:
+  **+37.9k PLN/MW/yr (+1.3%)**, oracle ceiling +132k (+4.6%).
+- **Positive in all 5 quarters** on the recovery leg (blind→fcst: 25Q3
+  −124k→−101k, 25Q4 −162k→−131k, 26Q1 −158k→−138k, 26Q2 −206k→−168k, 26Q3
+  −8.8k→−7.8k) — the first forecaster monetization in the program that
+  passes the by-quarter rule. It's a bid/dispatch decision, not a spread, so
+  the F24/F25 executability guardrail is satisfied trivially.
+- **The honest headline: the −668k drag is ~80% structural.** Even perfect
+  1h-window timing recovers only 37% of it; the rest is the unavoidable cost
+  of buying back energy at CEN plus degradation. Better forecasts move the
+  needle by at most another ~95k/yr (oracle−fcst) — the forecast-quality
+  lever here is real but second-order vs the 2.7M capacity leg.
+- Caveats: single realized path; W=2 chosen from a 3-point sweep on the same
+  span (mechanism argues it generalizes; re-sweep on new data); recovery
+  settles at CEN, which for a battery is its own imbalance — legitimate — but
+  live vintage risk (F19) applies to the forecast inputs, now measurable via
+  the live collector.
+
 ### F26. NWP run-to-run revision: the manufactured intraday forecast revision is a REAL signal, but the executable edge is quarter-concentrated
 `src/nwp_revision.py` — F10 lamented that PL publishes no intraday RES-
 forecast revision; we manufactured one from consecutive NWP runs (Open-Meteo
@@ -814,6 +846,8 @@ Strategy / analysis:
 - `bess_activation.py` — Layer 1 v1: direction frequencies, marginal-price
   distributions by block × direction, activation curves
   π_up(p|block) = P(dir=G ∧ marg ≥ p), quarterly regime table.
+- `bess_soc_policy.py` — price-aware SoC recovery timing off the OOS CEN
+  forecast medians (F27: +38k/yr net, positive every quarter; oracle +132k).
 - `ida_term.py` — fully-executable auction-to-auction spreads (F25: dead).
 - `nwp_revision.py` — NWP run-to-run RES-forecast revision vs the IDA/CEN
   chain (F26: real signal, quarter-concentrated edge; keeps the Previous

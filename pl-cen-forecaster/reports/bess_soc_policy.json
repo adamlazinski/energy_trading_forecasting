@@ -1,0 +1,54 @@
+{
+  "window_qh": 2,
+  "fcst_coverage": 1.0,
+  "policies": {
+    "blind": {
+      "rec_pnl_ann": -667674.0,
+      "cap_net_ann": 2667985.0,
+      "act_pnl_ann": 864205.0,
+      "net_total_ann": 2864516.0,
+      "n_recoveries": 6400,
+      "n_fallback_no_fcst": 0,
+      "cycles_per_day": 2.56,
+      "rec_by_quarter": {
+        "2025Q3": -123659.0,
+        "2025Q4": -162128.0,
+        "2026Q1": -157995.0,
+        "2026Q2": -205985.0,
+        "2026Q3": -8761.0
+      }
+    },
+    "fcst": {
+      "rec_pnl_ann": -553471.0,
+      "cap_net_ann": 2629494.0,
+      "act_pnl_ann": 826415.0,
+      "net_total_ann": 2902438.0,
+      "n_recoveries": 5881,
+      "n_fallback_no_fcst": 1,
+      "cycles_per_day": 2.4,
+      "rec_by_quarter": {
+        "2025Q3": -100622.0,
+        "2025Q4": -130978.0,
+        "2026Q1": -138416.0,
+        "2026Q2": -168030.0,
+        "2026Q3": -7843.0
+      }
+    },
+    "oracle": {
+      "rec_pnl_ann": -421534.0,
+      "cap_net_ann": 2634008.0,
+      "act_pnl_ann": 784371.0,
+      "net_total_ann": 2996845.0,
+      "n_recoveries": 5879,
+      "n_fallback_no_fcst": 0,
+      "cycles_per_day": 2.41,
+      "rec_by_quarter": {
+        "2025Q3": -63566.0,
+        "2025Q4": -83862.0,
+        "2026Q1": -121970.0,
+        "2026Q2": -142086.0,
+        "2026Q3": -4276.0
+      }
+    }
+  }
+}
