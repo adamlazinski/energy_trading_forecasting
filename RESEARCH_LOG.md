@@ -886,6 +886,14 @@ Data:
   settled revision error (F19 residual risk), prove publication timing
   empirically, accumulate the live dataset nobody can buy (LITERATURE.md §6).
   Uptime log = gaps in capture_ts; `python -m src.live_collector status`.
+- `shadow_cmbp.py` — **shadow forecaster** (daily 07:20 via LaunchAgent
+  `ops/com.pl-cen.shadow.plist`, first gate-honest issuance 2026-07-09):
+  re-pulls history, retrains the F28 model, issues tomorrow's afrr_g/d
+  quantiles with `issued_ts` + `gate_ok` (True iff issued before 08:00 D-1),
+  appends to `~/.pl-cen-collector/data/shadow/`, scores matured forecasts
+  vs realized CMBP each run. The live track record no backtest can fake.
+  CEN live shadow deferred: needs a daily panel-refresh pipeline; PSE's own
+  CEN forecast is meanwhile captured live by the collector as the benchmark.
 
 Modeling / evaluation:
 - `features.py` — leakage-honest feature builder (fx_ anchors, published

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Shadow CMBP forecaster: daily 07:20 local (before the ~07:30 capacity-bid
+  gate and the 09:10 D-1 publication). Same TCC-safe deployment pattern as
+  the collector: runs from ~/.pl-cen-collector, store data/shadow/.
+  NB launchd skips StartCalendarInterval firings while asleep and runs the
+  job once on wake if missed — a late run issues with gate_ok=false, which
+  is exactly the honest record of a missed gate.
+  Install:  cp ops/com.pl-cen.shadow.plist ~/Library/LaunchAgents/ &&
+            launchctl load ~/Library/LaunchAgents/com.pl-cen.shadow.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.pl-cen.shadow</string>
+    <key>WorkingDirectory</key>
+    <string>/Users/adamlazinski/.pl-cen-collector</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/adamlazinski/.pl-cen-collector/.venv/bin/python</string>
+        <string>-m</string>
+        <string>src.shadow_cmbp</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>20</integer></dict>
+    <key>StandardErrorPath</key>
+    <string>/Users/adamlazinski/.pl-cen-collector/data/shadow/launchd.err</string>
+    <key>StandardOutPath</key><string>/dev/null</string>
+    <key>LowPriorityIO</key><true/>
+    <key>ProcessType</key><string>Background</string>
+</dict>
+</plist>
