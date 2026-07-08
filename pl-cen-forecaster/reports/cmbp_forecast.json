@@ -1,0 +1,125 @@
+{
+  "gate": "D-1 07:30 Warsaw (CMBP publishes ~09:10 D-1; zmb ~08:00 -> lagged only; CEN freshest legal day D-3; no DA anchor)",
+  "targets": {
+    "afrr_g": {
+      "n": 13223,
+      "pinball_gbm": 23.31,
+      "pinball_clim": 28.86,
+      "mae_gbm": 62.5,
+      "mae_naive1d": 74.0,
+      "mae_naive7d": 86.6,
+      "cover_10_90": 0.608,
+      "by_quarter": {
+        "2025Q1": {
+          "mae_gbm": 59.1,
+          "mae_naive1d": 66.0,
+          "pinball_gbm": 22.0
+        },
+        "2025Q2": {
+          "mae_gbm": 46.8,
+          "mae_naive1d": 62.5,
+          "pinball_gbm": 16.92
+        },
+        "2025Q3": {
+          "mae_gbm": 45.0,
+          "mae_naive1d": 52.1,
+          "pinball_gbm": 15.95
+        },
+        "2025Q4": {
+          "mae_gbm": 73.5,
+          "mae_naive1d": 88.3,
+          "pinball_gbm": 27.66
+        },
+        "2026Q1": {
+          "mae_gbm": 72.7,
+          "mae_naive1d": 92.5,
+          "pinball_gbm": 27.97
+        },
+        "2026Q2": {
+          "mae_gbm": 78.4,
+          "mae_naive1d": 83.8,
+          "pinball_gbm": 29.4
+        },
+        "2026Q3": {
+          "mae_gbm": 59.2,
+          "mae_naive1d": 57.9,
+          "pinball_gbm": 23.48
+        }
+      },
+      "capture": {
+        "bid_q0.1": {
+          "clear_rate": 0.762,
+          "revenue_share_vs_bid0": 0.889
+        },
+        "bid_q0.25": {
+          "clear_rate": 0.596,
+          "revenue_share_vs_bid0": 0.762
+        },
+        "bid_q0.5": {
+          "clear_rate": 0.404,
+          "revenue_share_vs_bid0": 0.582
+        }
+      }
+    },
+    "afrr_d": {
+      "n": 13223,
+      "pinball_gbm": 27.37,
+      "pinball_clim": 36.71,
+      "mae_gbm": 67.6,
+      "mae_naive1d": 82.1,
+      "mae_naive7d": 110.4,
+      "cover_10_90": 0.594,
+      "by_quarter": {
+        "2025Q1": {
+          "mae_gbm": 55.3,
+          "mae_naive1d": 61.5,
+          "pinball_gbm": 22.1
+        },
+        "2025Q2": {
+          "mae_gbm": 59.2,
+          "mae_naive1d": 84.0,
+          "pinball_gbm": 21.54
+        },
+        "2025Q3": {
+          "mae_gbm": 35.2,
+          "mae_naive1d": 48.6,
+          "pinball_gbm": 12.56
+        },
+        "2025Q4": {
+          "mae_gbm": 55.9,
+          "mae_naive1d": 76.1,
+          "pinball_gbm": 21.87
+        },
+        "2026Q1": {
+          "mae_gbm": 42.0,
+          "mae_naive1d": 57.4,
+          "pinball_gbm": 15.53
+        },
+        "2026Q2": {
+          "mae_gbm": 159.3,
+          "mae_naive1d": 165.8,
+          "pinball_gbm": 71.28
+        },
+        "2026Q3": {
+          "mae_gbm": 41.8,
+          "mae_naive1d": 66.4,
+          "pinball_gbm": 15.8
+        }
+      },
+      "capture": {
+        "bid_q0.1": {
+          "clear_rate": 0.751,
+          "revenue_share_vs_bid0": 0.912
+        },
+        "bid_q0.25": {
+          "clear_rate": 0.597,
+          "revenue_share_vs_bid0": 0.822
+        },
+        "bid_q0.5": {
+          "clear_rate": 0.416,
+          "revenue_share_vs_bid0": 0.694
+        }
+      }
+    }
+  }
+}

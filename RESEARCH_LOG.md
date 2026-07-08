@@ -35,6 +35,38 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F28. CMBP forecaster: the aFRR capacity prices behind the 2.7M leg are forecastable at the bid gate, beating persistence 16–18% in ~every quarter
+`src/cmbp_forecast.py` — the D-1 balancing-capacity auction is the *actual*
+bid decision behind the stack's dominant revenue leg (F16/F27: capacity ≈
+2.6–2.7M PLN/MW/yr vs tens-of-k elsewhere). CMBP publishes ~09:10 D-1
+(verified from publication_ts), so the bid gate is assumed 07:30 D-1 — a
+**harder information set than the CEN forecaster's**: no DA anchor (csdac is
+13:50 D-1), freshest settled CEN day is D-3, zmb only lagged (pubs ~08:00).
+Features: CMBP/zmb same-hour lags 1/2/7d + D-1 day shape, CEN D-3 history +
+7d spike count, 48h-ahead NWP run (w3_d2/ghi_d2 — gate-legal by
+construction), calendar. Pooled per-quantile LightGBM, expanding monthly
+walk-forward 2025-01→2026-07 (n=13,223 hourly, both products).
+- **afrr_g (up)**: MAE 62.5 vs naive-1d 74.0 (−16%) / naive-7d 86.6;
+  pinball 23.3 vs trailing-90d climatology 28.9 (−19%). Beats naive in
+  6/7 quarters (only the partial 2026Q3 ties).
+- **afrr_d (down)**: MAE 67.6 vs 82.1 (−18%) / 110.4; pinball 27.4 vs 36.7
+  (−25%). Beats naive in **7/7 quarters**, including the 2026Q2 blowout
+  quarter (159 vs 166 — everyone is bad, GBM less so).
+- **Coverage honest flag**: 10–90 empirical coverage 0.59–0.61 vs nominal
+  0.80 — quantiles too narrow on a spiky series. Known fix in-repo:
+  split-conformal widening (src/conformal.py pattern); do before any use
+  where calibration matters.
+- **Capture curves** (bid at forecast quantile, paid CMBP iff CMBP ≥ bid):
+  bid@q10 clears ~75–76% of hours and captures ~89–91% of bid-0 revenue.
+  Stated honestly: under uniform pricing a price-taker's optimal bid is its
+  reservation cost independent of any forecast — the forecaster's real value
+  is (i) revenue projection, (ii) the D-1 commit-capacity-vs-stay-free
+  portfolio decision, where these quantiles are the missing input to the
+  F27/Layer-2 DP (the actual co-optimization is the follow-up build).
+- Caveats: bid-gate time (07:30 D-1) is an assumption — verify against PSE
+  MB rules; walk-forward preds saved (`reports/cmbp_wf_afrr_{g,d}.parquet`)
+  for the co-optimizer to consume.
+
 ### F27. Price-aware SoC recovery: the CEN forecaster's first positive-every-quarter monetization — and proof the F18 drag is mostly structural
 `src/bess_soc_policy.py` — F18's stack pays −668k PLN/MW/yr for price-blind
 SoC recovery (trade the instant the band is crossed). The forecaster's 60-min
@@ -848,6 +880,8 @@ Strategy / analysis:
   π_up(p|block) = P(dir=G ∧ marg ≥ p), quarterly regime table.
 - `bess_soc_policy.py` — price-aware SoC recovery timing off the OOS CEN
   forecast medians (F27: +38k/yr net, positive every quarter; oracle +132k).
+- `cmbp_forecast.py` — bid-gate-honest aFRR capacity-price quantiles, walk-
+  forward (F28: −16/−18% MAE vs persistence; wf preds saved for the co-opt).
 - `ida_term.py` — fully-executable auction-to-auction spreads (F25: dead).
 - `nwp_revision.py` — NWP run-to-run RES-forecast revision vs the IDA/CEN
   chain (F26: real signal, quarter-concentrated edge; keeps the Previous
