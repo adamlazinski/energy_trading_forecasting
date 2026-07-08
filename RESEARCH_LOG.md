@@ -35,6 +35,34 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F29. Commit-or-stay-free: the D-1 decision F27+F28 were built for turns out to need no forecast — capacity dominates 15× at the hourly level
+`src/bess_commit.py` — the co-optimizer joining both forecasters: each hour
+of D, at the D-1 07:30 gate, COMMIT to aFRR standby (F28 fee forecast) or
+stay FREE for CEN energy arbitrage (EV(h) = trailing-30d same-hour mean of
+the profitable part of "sell the hour's best quarter, refill at median",
+η²- and degradation-adjusted, D-3-lagged; free hours dispatch in real time
+on the 60-min CEN forecast vs trailing q90/q10 bands). Three commitment
+policies on the identical realized path (2025-08→2026-07, F27 recovery
+machinery in committed hours).
+- **Always-commit wins: net 2.95M vs 2.94M (fcst-selective) vs 2.94M
+  (oracle-selective).** Only 0.4% of hours have EV > fee forecast; the
+  freed hours execute just a handful of band trades, and forfeited fees
+  exceed arb gains — even with a *perfect* fee forecast.
+- **The margin is 15×**: mean fee 285 PLN/MW/h vs mean EV 19. Fee p10 (140)
+  sits above EV p99 (146) — the distributions barely overlap. Sensitivity:
+  fees would need to fall ~4× before even 5% of hours flip, ~8× for 16%.
+- **Verdict (negative with content):** in today's Poland the hourly
+  commit decision is trivially "always commit" — F16's stack-level
+  "capacity dominates" now proven at the decision level with gate-honest
+  forecasts on both sides. The CMBP forecaster's value stays where F28 put
+  it (revenue projection, calibration-sensitive uses); the CEN forecaster's
+  battery value stays in recovery timing (F27). Re-run this when CMBP
+  deflation (F16 trend) compresses the margin — the machinery is ready and
+  the flip threshold is now quantified.
+- Caveats: EV is a greedy 1-quarter arb estimate (a full free-day DP would
+  raise it, but closing a 15× gap is implausible); single realized path;
+  same bid-gate assumption as F28.
+
 ### F28. CMBP forecaster: the aFRR capacity prices behind the 2.7M leg are forecastable at the bid gate, beating persistence 16–18% in ~every quarter
 `src/cmbp_forecast.py` — the D-1 balancing-capacity auction is the *actual*
 bid decision behind the stack's dominant revenue leg (F16/F27: capacity ≈
@@ -882,6 +910,8 @@ Strategy / analysis:
   forecast medians (F27: +38k/yr net, positive every quarter; oracle +132k).
 - `cmbp_forecast.py` — bid-gate-honest aFRR capacity-price quantiles, walk-
   forward (F28: −16/−18% MAE vs persistence; wf preds saved for the co-opt).
+- `bess_commit.py` — D-1 commit-vs-free co-optimizer over F27+F28 (F29:
+  always-commit wins, capacity/EV margin 15×; flip thresholds quantified).
 - `ida_term.py` — fully-executable auction-to-auction spreads (F25: dead).
 - `nwp_revision.py` — NWP run-to-run RES-forecast revision vs the IDA/CEN
   chain (F26: real signal, quarter-concentrated edge; keeps the Previous
