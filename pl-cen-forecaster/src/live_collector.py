@@ -56,7 +56,12 @@ LIVE_SLUGS = {
     "imb_energy":   "en-rozl",      # system length
 }
 
-DERIVED = {"ts", "pub_ts", "row_hash", "capture_ts"}  # never hashed
+# never hashed: derived cols + publication stamps — PSE re-publishes identical
+# payloads every ~15 min with a fresh publication_ts, which would store dozens
+# of copies of unchanged rows (verified day 1: 38 identical versions/period).
+# Value changes still hash differently; capture_ts anchors when we saw them.
+DERIVED = {"ts", "pub_ts", "row_hash", "capture_ts",
+           "publication_ts", "publication_ts_utc"}
 
 
 def _hash_rows(df: pd.DataFrame) -> pd.Series:
