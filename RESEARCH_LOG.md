@@ -785,6 +785,15 @@ Data:
   CEN (F10), kept for other targets.
 - `pull_poeb_marginals.py` — legacy; its output was ladder-top stats, kept
   as `data/raw/pse_poeb_laddertop.parquet` (ladder cap/depth features).
+- `live_collector.py` — **live vintage collector** (running since
+  2026-07-08 via LaunchAgent `ops/com.pl-cen.collector.plist`, every 15 min
+  while the Mac is awake). Append-only store `data/live/{name}/{YYYY-MM}.parquet`:
+  any not-yet-seen row of the vintage-sensitive resources (kse_snapshot,
+  kse_actuals, kse_load, crb-rozl, price-fcst, pk5l-wp, sk, poeb-rbn,
+  en-rozl) is stored with `capture_ts`. Purpose: measure preliminary-vs-
+  settled revision error (F19 residual risk), prove publication timing
+  empirically, accumulate the live dataset nobody can buy (LITERATURE.md §6).
+  Uptime log = gaps in capture_ts; `python -m src.live_collector status`.
 
 Modeling / evaluation:
 - `features.py` — leakage-honest feature builder (fx_ anchors, published

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Live vintage collector (src/live_collector.py), every 15 min while awake.
+  Install:  cp ops/com.pl-cen.collector.plist ~/Library/LaunchAgents/ &&
+            launchctl load ~/Library/LaunchAgents/com.pl-cen.collector.plist
+  Remove:   launchctl unload ~/Library/LaunchAgents/com.pl-cen.collector.plist &&
+            rm ~/Library/LaunchAgents/com.pl-cen.collector.plist
+  Uptime log = capture_ts gaps in data/live/; stderr lands in data/live/launchd.err.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>com.pl-cen.collector</string>
+    <key>WorkingDirectory</key>
+    <string>/Users/adamlazinski/Desktop/energy_trading_forecasting/pl-cen-forecaster</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/adamlazinski/Desktop/energy_trading_forecasting/pl-cen-forecaster/.venv/bin/python</string>
+        <string>-m</string>
+        <string>src.live_collector</string>
+    </array>
+    <key>StartInterval</key><integer>900</integer>
+    <key>RunAtLoad</key><true/>
+    <key>StandardErrorPath</key>
+    <string>/Users/adamlazinski/Desktop/energy_trading_forecasting/pl-cen-forecaster/data/live/launchd.err</string>
+    <key>StandardOutPath</key><string>/dev/null</string>
+    <key>LowPriorityIO</key><true/>
+    <key>ProcessType</key><string>Background</string>
+</dict>
+</plist>

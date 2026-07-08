@@ -1,5 +1,6 @@
 data/raw/
 data/proc/
+data/live/
 .venv/
 __pycache__/
 *.pyc
