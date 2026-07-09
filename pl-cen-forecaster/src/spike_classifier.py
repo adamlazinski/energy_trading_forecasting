@@ -30,6 +30,7 @@ import warnings
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
+from sklearn.isotonic import IsotonicRegression
 from sklearn.metrics import average_precision_score, roc_auc_score
 
 from .lear import load_panel
@@ -90,6 +91,36 @@ def walkforward(df, feats, ycol):
     return prob
 
 
+def calibrate(df, ycol, prob):
+    """Walk-forward isotonic: month m calibrated on all OOS pairs before m.
+    Monotone map -> ranking (AUC/AP/top-decile) unchanged; only the absolute
+    probability scale is fixed, which is what dispatch rules consume."""
+    mon = df["ts"].dt.tz_convert(W).dt.strftime("%Y-%m")
+    cal = prob.copy()
+    seen = ~np.isnan(prob)
+    for m in sorted(mon[seen].unique()):
+        past = seen & (mon < m).to_numpy()
+        cur = seen & (mon == m).to_numpy()
+        if past.sum() < 5000 or df.loc[past, ycol].sum() < 20:
+            continue
+        iso = IsotonicRegression(out_of_bounds="clip")
+        iso.fit(prob[past], df.loc[past, ycol])
+        cal[cur] = iso.predict(prob[cur])
+    return cal
+
+
+def ece(y, p, bins=10):
+    """Expected calibration error, equal-count bins."""
+    edges = np.quantile(p, np.linspace(0, 1, bins + 1))
+    idx = np.clip(np.searchsorted(edges, p, side="right") - 1, 0, bins - 1)
+    err = 0.0
+    for b in range(bins):
+        m = idx == b
+        if m.sum():
+            err += m.mean() * abs(p[m].mean() - y[m].mean())
+    return float(err)
+
+
 def evaluate(df, ycol, prob, clim):
     m = ~np.isnan(prob) & ~np.isnan(clim)
     y, p, c = df.loc[m, ycol].to_numpy(), prob[m], clim[m]
@@ -132,13 +163,25 @@ def main():
         prob = walkforward(df, feats, ycol)
         clim = climatology_prob(df, ycol)
         res = evaluate(df, ycol, prob, clim)
+        pcal = calibrate(df, ycol, prob)
+        m = ~np.isnan(pcal) & ~np.isnan(clim)
+        yv = df.loc[m, ycol].to_numpy()
+        res["calibration"] = {
+            "brier_raw": round(float(np.mean((prob[m] - yv) ** 2)), 5),
+            "brier_iso": round(float(np.mean((pcal[m] - yv) ** 2)), 5),
+            "ece_raw": round(ece(yv, prob[m]), 4),
+            "ece_iso": round(ece(yv, pcal[m]), 4)}
         out["targets"][ycol] = res
         wf_cols[f"p_{ycol}"] = prob
+        wf_cols[f"p_{ycol}_cal"] = pcal
         print(f"== {ycol}: n={res['n']} base {res['base_rate']:.2%}  "
               f"AUC {res['auc']} (clim {res['auc_clim']})  "
               f"AP {res['ap']} (clim {res['ap_clim']})  "
               f"Brier {res['brier']} (clim {res['brier_clim']})  "
               f"top-decile capture {res['top_decile_capture']:.0%}")
+        c = res["calibration"]
+        print(f"   calibration: Brier {c['brier_raw']} -> {c['brier_iso']}  "
+              f"ECE {c['ece_raw']} -> {c['ece_iso']}")
         for q, v in res["by_quarter"].items():
             extra = (f"AUC {v['auc']}  AP {v['ap']} (clim {v['ap_clim']})"
                      if "auc" in v else "too few events")

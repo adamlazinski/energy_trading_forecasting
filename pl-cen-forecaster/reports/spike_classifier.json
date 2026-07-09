@@ -48,6 +48,12 @@
         "2026Q3": {
           "n_events": 4
         }
+      },
+      "calibration": {
+        "brier_raw": 0.00528,
+        "brier_iso": 0.00543,
+        "ece_raw": 0.0025,
+        "ece_iso": 0.002
       }
     },
     "y_neg": {
@@ -103,6 +109,12 @@
           "ap": 0.609,
           "ap_clim": 0.292
         }
+      },
+      "calibration": {
+        "brier_raw": 0.05328,
+        "brier_iso": 0.04749,
+        "ece_raw": 0.0378,
+        "ece_iso": 0.0114
       }
     }
   }

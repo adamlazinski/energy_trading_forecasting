@@ -52,9 +52,14 @@ climatology lagged 2 days.
   risk alerts, and the tail section of the paper. Follow-up: feature
   attribution (how much do the NWP revisions carry?), and wiring
   p_spike/p_neg into the F27 policy as a tilt.
-- Caveats: 2025Q1 has 1 spike (quarter unevaluable); probabilities not yet
-  calibrated (rank metrics honest, absolute p needs isotonic/Platt before
-  operational use); wf probs saved `reports/spike_wf_probs.parquet`.
+- **Calibration (added)**: walk-forward isotonic (month m calibrated on OOS
+  pairs < m only). Negatives: Brier 0.0533→0.0475, ECE 0.038→0.011 —
+  absolute probabilities now dispatch-grade. Spikes: no improvement (Brier
+  0.00528→0.00543, ECE already 0.0025) — ~300 events total is too few for
+  isotonic to beat the raw scale; use p_y_spike for *ranking* (top-decile
+  rules), p_y_neg_cal for *absolute* thresholds. Both saved in
+  `reports/spike_wf_probs.parquet` (raw + _cal columns).
+- Caveats: 2025Q1 has 1 spike (quarter unevaluable).
 
 ### F30. Conformal recalibration fixes CMBP coverage (0.61→0.77 up, 0.59→0.73 down) — and honestly surfaces where conformal breaks
 `src/cmbp_conformal.py` — rolling split-conformal (trailing 90d OOS
