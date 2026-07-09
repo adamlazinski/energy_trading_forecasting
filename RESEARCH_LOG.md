@@ -35,6 +35,40 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F31. CEN tail classifiers: spikes are 18× more findable than climatology says — the tails are where the model family was weakest and the dedicated classifier strongest
+`src/spike_classifier.py` — binary LightGBM walk-forward (monthly refits,
+2025-01→) on the strict H=60 panel + the F26 NWP revisions (legal at a
+60-min gate even for the freshest run — the signal that failed as a trade
+finds its home as a feature). Benchmark: trailing-90d hour-of-day
+climatology lagged 2 days.
+- **Spikes (CEN>1500, base 0.75%)**: AUC 0.853, average precision 0.464 vs
+  climatology 0.025 (**18× lift**); 71% of all spikes fall in the top
+  decile of predicted risk. AP beats climatology in **every** quarter with
+  enough events (5/5).
+- **Negative prices (CEN<0, base 7.6%)**: AUC 0.935, AP 0.542 vs 0.269 —
+  better in 7/7 quarters.
+- Use: BESS positioning (pre-charge before predicted-negative periods,
+  hold SoC before spike-risk hours — plugs into the F27 recovery window),
+  risk alerts, and the tail section of the paper. Follow-up: feature
+  attribution (how much do the NWP revisions carry?), and wiring
+  p_spike/p_neg into the F27 policy as a tilt.
+- Caveats: 2025Q1 has 1 spike (quarter unevaluable); probabilities not yet
+  calibrated (rank metrics honest, absolute p needs isotonic/Platt before
+  operational use); wf probs saved `reports/spike_wf_probs.parquet`.
+
+### F30. Conformal recalibration fixes CMBP coverage (0.61→0.77 up, 0.59→0.73 down) — and honestly surfaces where conformal breaks
+`src/cmbp_conformal.py` — rolling split-conformal (trailing 90d OOS
+residuals, hour-block groups, bid-gate-legal timing) on the F28 quantiles.
+- **afrr_g**: P10-90 coverage 0.608→0.774 (nominal 0.80), pinball flat
+  (23.31→23.26). Textbook.
+- **afrr_d**: coverage 0.594→0.728 but pinball 27.4→28.4 (+4%) — the 2026Q2
+  blowout violates exchangeability; trailing calibration mis-adapts around
+  regime breaks. Window sweep {30,60,90}: coverage monotone in window
+  length (longer memory averages over regimes) → 90d chosen.
+- Recalibrated preds saved (`reports/cmbp_wf_*_conf.parquet`) for
+  downstream use; shadow forecaster still issues raw quantiles until its
+  own scored history is long enough to self-calibrate (~2 weeks).
+
 ### F29. Commit-or-stay-free: the D-1 decision F27+F28 were built for turns out to need no forecast — capacity dominates 15× at the hourly level
 `src/bess_commit.py` — the co-optimizer joining both forecasters: each hour
 of D, at the D-1 07:30 gate, COMMIT to aFRR standby (F28 fee forecast) or
@@ -920,6 +954,10 @@ Strategy / analysis:
   forward (F28: −16/−18% MAE vs persistence; wf preds saved for the co-opt).
 - `bess_commit.py` — D-1 commit-vs-free co-optimizer over F27+F28 (F29:
   always-commit wins, capacity/EV margin 15×; flip thresholds quantified).
+- `cmbp_conformal.py` — rolling split-conformal on the CMBP quantiles (F30:
+  coverage 0.61→0.77 / 0.59→0.73; regime breaks are conformal's limit).
+- `spike_classifier.py` — CEN tail classifiers at H=60 (F31: spike AP 18×
+  climatology, top-decile captures 71% of spikes; negatives AUC 0.94).
 - `ida_term.py` — fully-executable auction-to-auction spreads (F25: dead).
 - `nwp_revision.py` — NWP run-to-run RES-forecast revision vs the IDA/CEN
   chain (F26: real signal, quarter-concentrated edge; keeps the Previous
