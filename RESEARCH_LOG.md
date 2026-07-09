@@ -969,15 +969,56 @@ Strategy / analysis:
   Runs cache `weather_prev_runs.parquet`).
 - `report_figs.py` — report figures.
 
-## In flight right now (2026-07-06 evening)
+## In flight right now (2026-07-09, session end — READ THIS FIRST ON RETURN)
 
-- `pull_bpkdbo` backfilling 2024-06-15 → today (~2.5 h; checkpointed,
-  resumable). Then: rerun `python -m src.bess_activation` → v1 curves.
-- `pull_tge_rdb` backfilling the same span (~25 min). Then:
-  `python -m src.backtest_spread_ida` → first honest verdict on the
-  *tradeable* CEN↔intraday spread.
-- ENTSO-E token awaited (user) → fresh RES/load actuals + IDA prices from
-  a second source + DE_LU spread features.
+**Two autonomous agents are running on this Mac** (only while awake; check
+health first thing on return):
+
+```bash
+cd ~/.pl-cen-collector
+.venv/bin/python -m src.live_collector status    # 9 feeds, every 15 min
+.venv/bin/python -m src.shadow_cmbp status       # daily 07:20 Warsaw fc
+tail data/live/collector.log data/shadow/shadow.log
+```
+
+- **Live vintage collector** since 2026-07-08: expect roughly 65–70k
+  rows/day (97% offer ladder). Watch for capture_ts gaps = Mac asleep.
+- **Shadow CMBP forecaster**: first gate-honest issuance 2026-07-09
+  (gate_ok=true). Expect gate_ok=100% on all rows after 07-09; MAE vs
+  naive1d accumulating in the log line each morning.
+- Both run from `~/.pl-cen-collector` (NOT the repo — macOS TCC hangs
+  launchd agents that touch ~/Desktop; repo `data/live` is a symlink).
+  After editing collector/shadow code in the repo:
+  `cp src/{pse_client,live_collector,shadow_cmbp}.py ~/.pl-cen-collector/src/`.
+
+**Dated follow-ups:**
+- **~2026-07-22 — vintage audit** (2 weeks of live data): measure
+  preliminary-vs-settled revisions properly; score PSE's live `price_fcst`
+  vs settled CEN (the benchmark a future live CEN shadow must beat); rerun
+  F27 with snapshot-vintage inputs → put a number on the F19 live-vs-
+  backtest gap. Day-1 evidence says revisions are small (median 0 MW,
+  max 13–22 MW) — good sign, one calm day.
+- **~2026-08-10 — first shadow track-record read** (~30 gate-honest days).
+- Spike-classifier isotonic improves as events accrue (only ~300 spikes
+  in-sample so far; negatives already dispatch-grade, ECE 0.011).
+
+**Next builds, in recommended order:**
+1. **The paper** (user deferred, next big item): "first post-reform study
+   of Polish CEN" — skeleton = README results table; F30 (conformal) and
+   F31 (tails) were built as its missing sections. LITERATURE.md = related
+   work. The 2026 EU imbalance review (arXiv 2605.17054) confirms nobody
+   has published on post-reform PL.
+2. **F27 × F31 tilt**: wire p_y_neg_cal (absolute-threshold charging) and
+   p_y_spike top-decile (hold SoC) into the recovery policy; by-quarter
+   rule applies.
+3. Ladder behavioral analytics (stickiness, repricing events, curve shape
+   → spike lead indicators) — F30-candidate novelty.
+4. Cross-product capacity relative value (aFRR vs mFRR vs FCR allocation).
+5. ENTSO-E outages pull → tightness features for the spike classifier.
+
+**Where everything is**: findings F1–F31 above; interview kit
+`docs/INTERVIEW.md` (CV bullets + 90s pitch + Q&A); recruiter-facing
+`README.md`; literature survey `LITERATURE.md`. All pushed through 8c1ea68.
 
 ## Queue (rough priority)
 
