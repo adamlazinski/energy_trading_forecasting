@@ -35,6 +35,39 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F32. F27×F31 tilt: the tail classifier does NOT add recovery-timing value — median timing already exhausts the recoverable slice
+`src/bess_soc_tilt.py` — wired F31's tail probabilities into F27's SoC-recovery
+timing: within the recovery window pick the quarter by an EV blend of the LEAR
+median and the classifier — discharge into a spike (`(1−p_spike)·fc +
+p_spike·2419`, argmax), charge into a negative quarter (`(1−p_neg)·fc +
+p_neg·NEG`, argmin). `p_y_neg_cal` is calibrated (absolute EV, per F31);
+`p_y_spike` used for in-window ranking only. Same realized path/mechanics as
+F27 (bess_soc_policy); only the fire-quarter changes. Gate-honest by F27's
+argument (H=60 probs for t..t+3 issued ≤ t). Baseline reproduces F27 exactly
+(fcst NET 2,902,438 = +37.9k vs blind).
+- **The tilt adds essentially nothing.** Best config over the {W,NEG} sweep:
+  W=2, NEG=−421 → NET 2,905,418 = **+2,980 vs the best fcst (+0.10%)**, and the
+  sign **flips with the NEG-selection knob** (−169→−674, −421→+2,980,
+  −1000→−4,902). At W=3/4 the same-W tilt-fcst gap looks large (+15k) but only
+  because the wider-window *baseline* is worse — no tilt config beats the
+  overall best (F27 fcst at W=2).
+- **Best config is 4/5 quarters positive on the recovery leg** (+6.3k summed;
+  the miss is −57 in the tiny partial 2026Q3) — technically near-passing rule
+  #3, but the whole edge is tuning-fragile and <0.1% of the 2.9M stack, i.e.
+  within single-path noise. Not a deployable improvement.
+- **Why**: F27 already showed recovery timing is ~80% structural (oracle
+  headroom over fcst only +94k/yr). The classifier's strength is *identifying*
+  rare events, but a *forced* recovery seldom coincides with a tail quarter
+  inside a gate-honest ≤60-min window, and where the median already picks the
+  best in-window quarter the tail read adds no ordering. Verdict: the tail
+  classifier's dispatch value stays in **positioning/alerts** (F31's original
+  use — pre-position SoC *ahead* of predicted tail windows, a policy-level
+  lever) not in retiming a forced recovery. That larger build (change the
+  SoC-target/commit policy, not just recovery timing) is the open follow-up.
+- Caveats: single realized path; SPIKE/NEG selection levels are point
+  estimates (the −45k neg outlier makes mean vs median matter — hence the
+  sweep); tilt only touches recovery, not the F29 commit decision.
+
 ### F31. CEN tail classifiers: spikes are 18× more findable than climatology says — the tails are where the model family was weakest and the dedicated classifier strongest
 `src/spike_classifier.py` — binary LightGBM walk-forward (monthly refits,
 2025-01→) on the strict H=60 panel + the F26 NWP revisions (legal at a
