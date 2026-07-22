@@ -432,10 +432,25 @@ timing by **+0.1%** (≈3k PLN/MW/yr), and the sign flips with the
 negative-selection level — tuning-fragile, within single-path noise. The reason
 is structural: a *forced* recovery rarely coincides with a tail quarter inside a
 gate-honest ≤60-minute window, and where the median already picks the best
-in-window quarter the tail read adds no ordering. The tail classifiers' dispatch
-value therefore stays where §7 put it — *positioning and alerting* (pre-position
-SoC ahead of predicted tail windows, a policy-level lever) — not retiming an
-already-forced recovery.
+in-window quarter the tail read adds no ordering.
+
+We then test the larger lever — *positioning* rather than timing (F33): shift the
+SoC target band itself, by a diurnal signal (the tail structure is strongly
+diurnal — negatives 10–14h, spikes 19–20h) or by the H=60 tail probabilities, so
+the battery enters cheap windows with room to charge and dear windows holding
+charge to discharge. This also fails to beat the fixed band (best −0.8%), but the
+decomposition is instructive: an aggressive tilt *does* improve the
+energy-arbitrage leg by ≈+190k PLN/MW/yr — positioning genuinely buys cheaper and
+sells dearer — yet holding SoC off-center forgoes ≈−540k of aFRR capacity, so net
+falls. This is F29's 15× capacity dominance at the SoC-management level: **the
+tail classifiers' dispatch value is real but structurally uncapturable while
+capacity fees are this high** — every MWh repositioned to catch a tail costs more
+in forgone capacity than the tail is worth. Their value therefore stays in risk
+alerting and revenue projection (§6–§7), not dispatch, until capacity fees deflate
+(F29 quantifies the ≈4× threshold). This unifies the three dispatch-value
+findings (F29/F32/F33) into one thesis: in today's Poland the storage optimum is
+*always offer capacity, hold the band* — no forecast-driven dispatch tilt clears
+the capacity opportunity cost.
 
 **The commitment decision needs no forecast — yet (F29).** Co-optimizing each
 hour between committing to aFRR standby (using the §6 capacity forecast) and
@@ -542,5 +557,5 @@ separates the survivable claims from the flattering ones in a market this young.
 | §6 capacity forecaster + conformal | F28, F30 | `cmbp_forecast.py`, `cmbp_conformal.py` |
 | §7 tail classifiers | F31 | `spike_classifier.py` |
 | §8.1 spreads dead | F2, F24, F25, F26 | `ida_term.py`, `nwp_revision.py` |
-| §8.2 dispatch value | F16, F27, F29, F32 | `bess_soc_policy.py`, `bess_soc_tilt.py`, `bess_commit.py` |
+| §8.2 dispatch value | F16, F27, F29, F32, F33 | `bess_soc_policy.py`, `bess_soc_tilt.py`, `bess_soc_position.py`, `bess_commit.py` |
 | §9 live validation | — | `live_collector.py`, `shadow_cmbp.py` |

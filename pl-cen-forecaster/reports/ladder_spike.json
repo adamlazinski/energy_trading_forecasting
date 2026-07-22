@@ -1,0 +1,125 @@
+{
+  "lags": [
+    5,
+    10,
+    96
+  ],
+  "ladder_feats": [
+    "tail_vol_L5",
+    "cheap_frac_L5",
+    "g_max_L5",
+    "g_p90_L5",
+    "tail_vol_L10",
+    "cheap_frac_L10",
+    "g_max_L10",
+    "g_p90_L10",
+    "tail_vol_L96",
+    "g_max_L96",
+    "d_tail"
+  ],
+  "variants": {
+    "F31_baseline": {
+      "n": 52884,
+      "base_rate": 0.0075,
+      "auc": 0.853,
+      "auc_clim": 0.788,
+      "ap": 0.464,
+      "ap_clim": 0.025,
+      "brier": 0.00528,
+      "brier_clim": 0.00739,
+      "top_decile_capture": 0.707,
+      "by_quarter": {
+        "2025Q1": {
+          "n_events": 1
+        },
+        "2025Q2": {
+          "n_events": 29,
+          "auc": 0.71,
+          "ap": 0.104,
+          "ap_clim": 0.048
+        },
+        "2025Q3": {
+          "n_events": 80,
+          "auc": 0.865,
+          "ap": 0.52,
+          "ap_clim": 0.066
+        },
+        "2025Q4": {
+          "n_events": 104,
+          "auc": 0.766,
+          "ap": 0.31,
+          "ap_clim": 0.016
+        },
+        "2026Q1": {
+          "n_events": 88,
+          "auc": 0.956,
+          "ap": 0.795,
+          "ap_clim": 0.015
+        },
+        "2026Q2": {
+          "n_events": 90,
+          "auc": 0.821,
+          "ap": 0.561,
+          "ap_clim": 0.152
+        },
+        "2026Q3": {
+          "n_events": 4
+        }
+      }
+    },
+    "F31_plus_ladder": {
+      "n": 52884,
+      "base_rate": 0.0075,
+      "auc": 0.845,
+      "auc_clim": 0.788,
+      "ap": 0.473,
+      "ap_clim": 0.025,
+      "brier": 0.00505,
+      "brier_clim": 0.00739,
+      "top_decile_capture": 0.684,
+      "by_quarter": {
+        "2025Q1": {
+          "n_events": 1
+        },
+        "2025Q2": {
+          "n_events": 29,
+          "auc": 0.69,
+          "ap": 0.145,
+          "ap_clim": 0.048
+        },
+        "2025Q3": {
+          "n_events": 80,
+          "auc": 0.872,
+          "ap": 0.59,
+          "ap_clim": 0.066
+        },
+        "2025Q4": {
+          "n_events": 104,
+          "auc": 0.721,
+          "ap": 0.3,
+          "ap_clim": 0.016
+        },
+        "2026Q1": {
+          "n_events": 88,
+          "auc": 0.921,
+          "ap": 0.703,
+          "ap_clim": 0.015
+        },
+        "2026Q2": {
+          "n_events": 90,
+          "auc": 0.82,
+          "ap": 0.545,
+          "ap_clim": 0.152
+        },
+        "2026Q3": {
+          "n_events": 4
+        }
+      }
+    }
+  },
+  "lift": {
+    "auc": -0.008,
+    "ap": 0.009,
+    "quarters_improved": "2/5"
+  }
+}

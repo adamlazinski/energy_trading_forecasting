@@ -1,0 +1,93 @@
+{
+  "feasibility": {
+    "fcr": 1.0,
+    "afrr": 0.939,
+    "mfrrd": 0.94
+  },
+  "net_by_quarter": {
+    "2024Q2": {
+      "fcr": 2326374,
+      "afrr": 5300812,
+      "mfrrd": 4282933
+    },
+    "2024Q3": {
+      "fcr": 1673824,
+      "afrr": 2957679,
+      "mfrrd": 2536686
+    },
+    "2024Q4": {
+      "fcr": 1776692,
+      "afrr": 2865875,
+      "mfrrd": 1548356
+    },
+    "2025Q1": {
+      "fcr": 1345842,
+      "afrr": 2202203,
+      "mfrrd": 1574356
+    },
+    "2025Q2": {
+      "fcr": 1766222,
+      "afrr": 2804812,
+      "mfrrd": 2986270
+    },
+    "2025Q3": {
+      "fcr": 1356198,
+      "afrr": 2083678,
+      "mfrrd": 2025975
+    },
+    "2025Q4": {
+      "fcr": 1214211,
+      "afrr": 2230507,
+      "mfrrd": 1462828
+    },
+    "2026Q1": {
+      "fcr": 1447845,
+      "afrr": 2315544,
+      "mfrrd": 1543314
+    },
+    "2026Q2": {
+      "fcr": 1964148,
+      "afrr": 3979813,
+      "mfrrd": 2433178
+    },
+    "2026Q3": {
+      "fcr": 2029665,
+      "afrr": 3192262,
+      "mfrrd": 2180021
+    }
+  },
+  "afrr_win_quarters": "9/10",
+  "crossover_quarters": [
+    "2025Q2"
+  ],
+  "afrr_net_mean": 2993319,
+  "correlation": {
+    "fcr": {
+      "fcr": 1.0,
+      "afrr": 0.693,
+      "mfrrd": 0.655
+    },
+    "afrr": {
+      "fcr": 0.693,
+      "afrr": 1.0,
+      "mfrrd": 0.562
+    },
+    "mfrrd": {
+      "fcr": 0.655,
+      "afrr": 0.562,
+      "mfrrd": 1.0
+    }
+  },
+  "diversification": {
+    "pure_afrr_cv": 0.332,
+    "50/50 aFRR+fcr": {
+      "mean": 2341710,
+      "cv": 0.283
+    },
+    "50/50 aFRR+mfrrd": {
+      "mean": 2625355,
+      "cv": 0.342
+    }
+  },
+  "verdict": "always aFRR; allocation and diversification both collapse (extends F29)"
+}

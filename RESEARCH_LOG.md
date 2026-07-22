@@ -35,6 +35,107 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F35. Cross-product capacity relative value: allocation collapses to "always aFRR" — capacity dominates, and within capacity one product dominates
+`src/capacity_relval.py` — F16/F29 showed capacity is ~90% of BESS value and
+always worth committing; the open decision was WHICH of PSE's four cleared
+reserve products (FCR, aFRR, mFRRd, RR; both directions). Net PLN/MW/yr =
+gross clearing price × feasibility, by quarter.
+- **Gross ranking (mean PLN/MW/h, up+dn): aFRR 333 > mFRRd 264 > FCR 181 >
+  RR (up-only 99).** aFRR pays +26% over mFRRd, +84% over FCR.
+- **aFRR is the NET optimum in 9/10 quarters (~3.0M/MW/yr).** Its +26% gross
+  lead dwarfs its measured −6.1% feasibility haircut (bess_cooptimize:
+  activation drifts SoC out of the offerable band). Sensitivity: even giving
+  mFRRd/FCR a generous 1.0 feasibility doesn't flip the ranking except the one
+  quarter below — robust.
+- **One transient crossover — 2025Q2**, where an mFRRd price spike put it net
+  2.99M vs aFRR 2.80M. Not a durable regime (aFRR back on top every quarter
+  since); a watch-item, not an allocation change.
+- **Product diversification does NOT pay.** The four products are 0.56–0.69
+  correlated (all track system tightness), so a mix can't hedge. A 50/50
+  aFRR+FCR blend trims quarterly-revenue CV 0.332→0.283 but gives up 22% of
+  mean (3.0M→2.3M) — a bad trade; 50/50 aFRR+mFRRd is even *worse* on vol
+  (CV 0.342). Pure aFRR is both highest-return and volatility-competitive.
+- **Verdict (negative with content, F29 family).** The sophisticated
+  optimizations keep collapsing to trivial rules in today's Poland: commit vs
+  free → always commit (F29); recovery timing / SoC positioning → hold the band
+  (F32/F33); and now product allocation / portfolio diversification → always
+  aFRR (F35). One product, one direction-pair, no forecast, no mix. Re-run when
+  the aFRR–mFRRd gap compresses (2025Q2 shows it can) or aFRR capacity deflates
+  (F16 trend; F29 threshold) — the machinery is ready.
+- Caveats: FCR feasibility 1.0 and mFRRd 0.94 are ASSUMED (only aFRR activation
+  data exists; per-product mFRR/FCR activation would sharpen it — a collector
+  target); RR has no published down price (gross-only, unranked); stacking
+  different products on different MW simultaneously not modeled (the high
+  correlation caps its upside); clearing prices = price-taker earnings, correct
+  for a 1 MW unit.
+
+### F34. Offer-ladder scarcity leads spikes univariately — but is priced into F31's panel (fundamentals-priced-in, for the supply curve)
+`src/ladder_features.py` + `src/ladder_spike.py`. The balancing offer ladder
+(poeb-rbn, 67M offers) is the merit-order supply curve; CEN is its marginal
+(F4 corr 0.88), so the ladder TOP is ~lagged price (F31 has it). The novel
+angle is SCARCITY: tail_vol (MW offered >1000 PLN) and cheap_frac (MW <500 /
+total). Offer set is ~fixed D-1 (vol ~28 GW, n ~934 barely move); all signal is
+in the price structure.
+- **Univariate lead is real, structural, confound-robust.** tail_vol lagged 75
+  min (gate-legal: ladder publishes at delivery+2min, so H=60 needs lag≥5)
+  corr **+0.244** with spikes vs lagged-CEN +0.060. Adds AUC **0.892→0.905** /
+  AP 0.190→0.206 over an hour-of-day + lagged-CEN baseline — i.e. beyond the
+  diurnal confound and beyond price. Lead persists across lags (lag1 +0.352,
+  lag5 +0.244, lag20 +0.077) with a 24h resurgence (+0.219 at lag96): a
+  scarcity feature with daily persistence, not a transient price echo.
+- **But on strict walk-forward it adds ~nothing to F31's full panel.** Wired
+  ladder features (lags 5/10/96 of tail_vol/cheap_frac/g_max/g_p90 + a tail
+  trend) into F31's exact classifier: AUC **0.853→0.845 (−0.008)**, AP
+  0.464→0.473 (+0.009, noise), **top-decile capture 71%→68%**, AP up in only
+  **2/5 quarters** (fails rule #3). Verdict: the ladder's scarcity read is
+  **redundant** with the tightness F31's panel already carries (load, RES,
+  spike-counts, NWP revisions) — the F10/F11/F15 "fundamentals priced in"
+  motif, now for the supply curve.
+- **The one place it might not be priced in: a shorter horizon.** The lead is
+  much stronger at lag1 (+0.352) than the H=60-forced lag5 (+0.244), so a
+  15-min spike NOWCAST could exploit the live ladder — but that needs the live
+  collector's pre-delivery ladder vintages to be gate-legal (archive only has
+  the delivery+2min stamp). Revisit ~Aug once ~30 collector-days exist. Ties to
+  the vintage-audit follow-up.
+- Caveats: in-sample logistic for the univariate screen (walk-forward LightGBM
+  for the honest A/B); ladder-top file only ran to 2025-08 so features rebuilt
+  from rbn full history (72,182 periods); scarcity thresholds 500/1000 PLN are
+  round-number choices (not swept — the walk-forward null makes tuning moot).
+
+### F33. Tail-aware SoC positioning also fails — but it shows WHY: positioning works, capacity dominates it
+`src/bess_soc_position.py` — the lever F32 pointed to. Instead of retiming a
+forced recovery (F32), shift the SoC target BAND itself so the battery enters
+cheap windows with room to charge and dear windows holding energy to discharge.
+Two gate-honest drivers: **diurnal** (band anti-correlated with the a-priori
+hour-of-day price shape — negatives 10–14h solar trough at 17–25%, spikes
+19–20h ramp; F4) and **tail** (F31 H=60 probs, neg_ahead−spike_ahead over K≤4).
+Baseline (SHIFT=0) reproduces bess_cooptimize exactly (NET 2,864,516).
+- **No shift magnitude or sign beats the fixed band.** Diurnal best −56k
+  (−2.0%), tail best −22k (−0.8%); neither by-quarter positive (2/5, 3/5). The
+  more you position, the worse net gets.
+- **But the decomposition is the finding — positioning WORKS, capacity kills
+  it.** At an aggressive tilt (+0.6) the recovery/arbitrage leg *improves*
+  +186k (tail) / +197k (diurnal): −668k → −482k/−470k — the battery genuinely
+  buys cheaper and sells dearer, so the tail/diurnal signal is economically
+  real. But holding SoC off-center to catch tails pushes it out of the aFRR
+  band, forgoing **−542k capacity** (tail) / **−590k** (diurnal) plus ~−170k
+  activation. Net −513k / −580k: the energy gain is swamped ~3× by forgone
+  capacity.
+- **Verdict — the unifying thesis (F29+F32+F33).** In today's capacity-
+  dominated Poland there is NO dispatch lever — recovery timing (F32) or SoC
+  positioning (F33) — that beats "hold the fixed band and always offer
+  capacity" (F29). The tail classifier's dispatch value (~+190k of arbitrage
+  it can unlock) is *real but structurally uncapturable*: every MWh repositioned
+  to catch a tail costs more in forgone capacity than the tail is worth. This
+  is F29's 15× dominance, now proven at the SoC-management level. The tail
+  classifiers' value stays in risk/alerts and revenue projection (F31/F28), not
+  dispatch — until capacity fees deflate ~4× (F29's quantified flip threshold);
+  the machinery is ready to re-run when they do.
+- Caveats: single realized path; diurnal shape treated as structural (a-priori
+  solar/ramp, not per-day fitted — flagged); positioning acts only via the
+  forced-recovery band, not a proactive voluntary trade (which would forgo
+  capacity even more directly).
+
 ### F32. F27×F31 tilt: the tail classifier does NOT add recovery-timing value — median timing already exhausts the recoverable slice
 `src/bess_soc_tilt.py` — wired F31's tail probabilities into F27's SoC-recovery
 timing: within the recovery window pick the quarter by an EV blend of the LEAR
