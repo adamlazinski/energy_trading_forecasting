@@ -35,6 +35,46 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F36. OOS storm stress-test (2026-07/08): the forecaster degrades gracefully, the tails break where expected, and volatility is a battery tailwind
+`reports/oos_storm_2026-08.json` — a live out-of-sample stress test. Re-pulled
+PSE to 08-04, rebuilt the panel, and scored models **fit on data < 2026-07-07**
+on the 07-07..08-04 fortnight — a genuine spike storm: CEN mean 502, **max 3413,
+min −4318**, spikes **3.7% (5× the 0.75% training base)**, negatives **13.9%
+(1.8×)**.
+- **CEN forecaster (GBM): holds on normal periods, breaks in the tails.** Normal
+  (0–1500) pinball **59.3** — essentially its training level (~63) — and it kept
+  the benchmark edge everywhere (full-OOS MAE 235 vs clim 287 / naive 330,
+  −18/−29%). But the **53 spike periods** blew up the aggregate (spike-bucket
+  pinball 579, MAE 1228, **coverage 0.13**), dragging full-OOS pinball to 88 and
+  **coverage to 0.56** (vs 0.795 trained). The raw quantile intervals did not
+  widen enough for a fat-tailed regime this extreme — exactly the failure the
+  conformal layer + tail classifiers exist to cover. Honest: no quantile model
+  calls a 3413 spike.
+- **Tail classifiers: negatives robust, spikes degraded-but-useful.** Negatives
+  held (AUC 0.912 vs 0.935; AP **0.572, better than the 0.542 trained**;
+  top-decile alarm 52% precise vs 9.6% base). Spikes fell (AUC 0.853→0.767,
+  top-decile capture 71%→51%) but still caught **half the storm in the top decile
+  at ~5× lift** — a real early-warning, not clairvoyant, on a 5×-normal
+  weather-driven regime.
+- **BESS: volatility is a tailwind, and dispatch-tilt still loses.** Storm net
+  ~2.80M/MW/yr annualized (near the 2.86M long-run, *above* the calmer part of
+  the window) — capacity prices spiked, so capacity+activation rose. The recovery
+  drag grew (−761k vs −668k). Forecast-timed recovery captured a **big
+  recovery-leg gain (+126k)** — timing matters far more when prices swing — **but
+  net was −16k**: the volatility also amplified the capacity/activation forfeited
+  by sitting out-of-band. The F29/F33 thesis holds even under maximum stress:
+  always offer capacity, hold the band.
+- **The live shadow capacity forecaster confirmed it out of sample**: over the
+  storm-heavy recent 10 days its edge over naive **widened to 39%** (vs ~22%
+  cumulative) and P10–90 coverage held at 0.77 — the forecaster is worth the most
+  exactly when the market is hardest, because naive persistence collapses in a
+  whipsawing regime.
+- Caveats: RES features median-filled after 07-06 (no ENTSO-E token → the true
+  forecaster is marginally better than shown); scored the GBM, not the full
+  Ave-Q+LEAR ensemble (~1.5 pinball better); single fit-before/test-after split,
+  single realized path. Reproduce from `panel_15min` (needs a PSE re-pull to the
+  test window).
+
 ### F35. Cross-product capacity relative value: allocation collapses to "always aFRR" — capacity dominates, and within capacity one product dominates
 `src/capacity_relval.py` — F16/F29 showed capacity is ~90% of BESS value and
 always worth committing; the open decision was WHICH of PSE's four cleared

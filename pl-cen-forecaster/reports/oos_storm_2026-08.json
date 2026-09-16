@@ -1,0 +1,31 @@
+{
+  "description": "F36 OOS stress-test on the 2026-07/08 spike storm. Models fit on data < 2026-07-07, scored on 2026-07-07..08-04 (2776 periods). Data re-pulled from PSE to 08-04; RES features median-filled after 07-06 (no ENTSO-E token); CEN scored as GBM (not the full Ave-Q+LEAR ensemble); single fit-before/test-after split (not full monthly walk-forward).",
+  "environment": {
+    "window": "2026-07-22..08-04 (storm)",
+    "cen_mean": 502, "cen_max": 3413, "cen_min": -4318,
+    "spike_rate": 0.037, "spike_base_train": 0.0075, "spike_ratio": "5x",
+    "neg_rate": 0.139, "neg_base_train": 0.076, "neg_ratio": "1.8x"
+  },
+  "cen_forecaster_gbm": {
+    "reference_train_pinball": {"gbm": 63.6, "ave_q_lear": 62.1, "coverage": 0.795},
+    "full_oos":  {"pinball": 88.2,  "cov_10_90": 0.56, "mae_gbm": 235, "mae_clim": 287, "mae_naive": 330},
+    "calm":      {"pinball": 70.1,  "mae_gbm": 192, "mae_clim": 226, "mae_naive": 286},
+    "storm":     {"pinball": 107.7, "cov_10_90": 0.55, "mae_gbm": 281, "mae_clim": 354, "mae_naive": 376},
+    "normal_0_1500": {"pinball": 59.3, "mae_gbm": 168, "mae_clim": 200, "mae_naive": 268},
+    "spike_gt_1500": {"n": 53, "pinball": 579, "cov_10_90": 0.13, "mae_gbm": 1228, "mae_clim": 1662, "mae_naive": 1180}
+  },
+  "tail_classifiers": {
+    "spike": {"oos_base": 0.019, "n_events": 53, "auc": 0.767, "auc_train": 0.853, "ap": 0.316, "ap_train": 0.464, "top_decile_capture": 0.51, "top_decile_capture_train": 0.71, "alarm_precision": 0.097},
+    "neg":   {"oos_base": 0.096, "n_events": 266, "auc": 0.912, "auc_train": 0.935, "ap": 0.572, "ap_train": 0.542, "top_decile_capture": 0.54, "alarm_precision": 0.518}
+  },
+  "bess_annualized": {
+    "full_history_ref": {"net": 2864516, "recovery": -667674},
+    "full_recent_blind": {"net": 2546894, "cap": 2407433, "act": 829693, "recovery": -690231},
+    "full_recent_fcst_timing_gain": -30251,
+    "storm_blind": {"net": 2803917, "cap": 2647927, "act": 916970, "recovery": -760979},
+    "storm_fcst":  {"net": 2787934, "cap": 2597270, "act": 825429, "recovery": -634765},
+    "storm_fcst_timing_gain": -15983,
+    "storm_fcst_recovery_leg_gain": 126214
+  },
+  "shadow_capacity_live": {"recent_10d_edge_vs_naive": 0.39, "coverage_held": 0.77}
+}
