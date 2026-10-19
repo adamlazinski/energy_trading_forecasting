@@ -1,0 +1,40 @@
+# Konfiguracja cenmodel. Ścieżki są względne względem TEGO pliku.
+workdir: work            # tu trafia cache z API PSE, modele i raporty
+start: "2024-06-14"      # początek jednolitej ceny niezbilansowania — nie zmieniaj na wcześniej
+horizon_min: 60          # prognoza robiona H minut przed początkiem okresu dostawy
+
+# CORMin [zł/MWh] (WDB 12.4(3), indeksowany CPI). Dopisz nowy rok, gdy PSE go ogłosi;
+# do tego czasu używana jest ostatnia znana wartość.
+cor_min: {2024: 10.00, 2025: 10.50, 2026: 10.82}
+
+# Twoje dane. Usuń [] i odkomentuj przykłady. Dwa rodzaje plików (CSV lub parquet):
+#  realtime: pomiar znany w chwili `time_col` (np. niezbilansowanie, aktywacja aFRR, ACE)
+#  forecast: prognoza dla okresu `target_col`, wydana w chwili `issued_col` (np. wiatr, PV)
+# Model sam bierze tylko to, co było znane w chwili bramki (początek okresu - horizon_min).
+own_data: []
+#  - name: imb                        # prefiks cech, krótki
+#    path: my_data/imbalance.csv
+#    kind: realtime
+#    time_col: ts                     # KIEDY wartość była znana (nie początek pomiaru!)
+#    timezone: Europe/Warsaw          # tylko gdy daty są bez strefy (bez +01:00 / Z)
+#    columns: [imbalance_mw, afrr_up_mw, afrr_down_mw]   # pomiń = wszystkie liczbowe
+#    known_delay_min: 0               # dodaj zapas, jeśli znacznik to początek uśredniania
+#    max_staleness_min: 60            # starsze wartości = brak danych
+#    sep: ";"                         # CSV z polskiego Excela
+#    decimal: ","
+#  - name: wind
+#    path: my_data/wind_forecast.parquet
+#    kind: forecast
+#    issued_col: issued_at
+#    target_col: target_ts            # POCZĄTEK okresu dostawy
+#    target_resolution_min: 15        # 60 jeśli prognoza godzinowa
+#    timezone: UTC
+
+model:
+  final: blend           # structural | direct | blend — co trafia do kolumn q05..q95
+  n_scenarios: 200
+  conformal_days: 14     # okno kalibracji przedziałów
+  conformal_lag_days: 2  # CEN publikuje się D+1 ~14:00
+  holdout_days: 16       # tyle ostatnich dni `train` zostawia poza treningiem (kalibracja)
+  train_start: auto      # auto = od najwcześniejszych Twoich danych (lub od `start`)
+  seed: 0

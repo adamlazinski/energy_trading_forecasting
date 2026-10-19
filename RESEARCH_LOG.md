@@ -35,6 +35,104 @@ whether any spread against an executable leg survives costs.**
 
 ## Findings so far (chronological)
 
+### F38. What drives CEN uncertainty — and a first structural (SK → WDB chain) forecaster
+Variance anatomy, aFRR era (2025-07-11 → 2026-10-17, sd CEN 875):
+- **SK is the master variable.** Helping activation volume (ZEB_PP +
+  PZEB_aFRR) ≈ −SK, corr **0.997**. Sign picks the regime (short: median
+  586, P10–90 430–930; long: median 303, P10 −207, min −45k). Persistent:
+  lag-1h autocorr 0.77, sign unchanged after 1h 79%.
+- **aFRR premium = 37% of CEN variance**, ≈ share × (CEB_aFRR − CEB_PP)
+  (corr 0.97); the *spread* carries it (0.65 vs share 0.05). Barely
+  persistent (lag-1h autocorr 0.25) → irreducible width at H=60.
+- **Ladder convexity**: a 100/200 MW volume error moves CKOEB by median
+  12/30, P99 414/1467 PLN. The top 1% of CEN is mostly domestic (median
+  premium 0) — supply-curve end, not PICASSO. Yesterday's same-quarter
+  ladder is a poor real-time proxy (median CKOEB error 105, direction
+  agrees 67%).
+- **CSDAC** binds 23.5% of short / 5.6% of long periods (known D-1, a free
+  hard bound); **COR** median 10.5, P99 53; **CUA** 7 periods.
+
+Prototype `src/cen_structural.py` (train ≤ 2026-07-31, test 2026-08-01 →
+10-17, 7,488 periods, H=60): quantile-GBM SK → inverse-CDF scenarios →
+V = 1.04·(−SK) → analog bootstrap of (aFRR share, premium, curve
+residual) by (sign, hour block, |SK| bucket) → monotone LightGBM supply
+curve CKOEB = g(ZEB_PP, x) → WDB rule with CSDAC + COR.
+
+| info set | SK MAE | P(short) Brier | struct +RC | direct GBM +RC | cov P10–90 |
+|---|---|---|---|---|---|
+| public (strict) | 124 | 0.216 (clim 0.218) | 129.4 | 129.6 | 0.78 |
+| intraday (SK lags ≥5 qh, assumed real-time) | 90 | 0.152 | 117.8 | 117.5 | 0.79–0.80 |
+| oracle SK | 0 | — | 100.1 | — | 0.82 |
+
+Read-outs: (1) a real-time imbalance signal is worth −9% pinball and is
+the single biggest lever; perfect SK would take another −15%. (2)
+Structural ≈ direct GBM on pinball — its value is decomposability and
+scenarios, not (yet) accuracy. (3) **Raw intervals under-cover badly**
+(0.42–0.55 of nominal 0.80, all months, not just the August storm): a
++40–100 PLN level shift vs training and a short upper tail (31–44% above
+q90). Rolling 14-day conformal, lagged 2 days for settlement, restores
+0.78–0.80 / 0.89. Non-negotiable layer. (4) In August the supply-curve
+residual given TRUE ZEB had sd 1,505 vs 137 in training — the ladder,
+not SK, broke; a scarcity input (RO / rez_under / LOLP) is the next
+curve feature.
+
+### F37. CEN rebuilt bottom-up from public PSE data, per WDB 13.2–13.3: exact except the aFRR leg
+`src/cen_reconstruct.py`, rules from WDB tekst jednolity (incl. Zmiany
+3/2025) pkt 13.2–13.3, tested on 82,176 periods (2024-06-14 → 2026-10-17;
+ladder level to 2026-07-05). Each level of the chain vs PSE's own figure:
+- **L1** CEN = min(CEBśr, CSDAC) if SK>0 / max(…) if SK<0 (±0.01 if
+  CSDAC=0): **100.0% exact**. SK = `sk.sk_cost`; its sign matches
+  `price-cost.contracting` 100%. CSDAC binds in 16.1% of periods.
+- **L3** CEB_PP = CKOEB + COR: **100.0% exact**. COR is published as
+  `price-cost.cor_pp_cost` — per OREB, not per day (median 10, max 1,542).
+- **L2** CEBśr = volume-weighted price of energy activated in the
+  *helping* direction (ZEB_PP and PZEB_aFRR; CUA+COR if none): **100.0%
+  exact** pre-aFRR and in aFRR-era periods with no aFRR leg; **2.8% exact /
+  MAE 26 PLN** when an aFRR leg exists. Not fixable from 15-min data: in
+  20% of those periods published CEBśr lies *outside* [CEB_PP, CEB_aFRR],
+  impossible for any weighting — the rule weights per 4-s OAaFRR cycle and
+  `ceb_sr_afrr{g,d}` are not the matching volume-weighted averages.
+- **L4** CKOEB = CDO where the `oeb-bpkdbo` ladder, sorted by CDO
+  (G asc / D desc), covers |ZEB_PP|×4 MW: **99.9% exact**.
+- **End-to-end** from ladder + ZEB_PP + COR + aFRR aggregates + SK + CSDAC:
+  **99.8% exact pre-2025-07-11, 100% in aFRR-era periods without an aFRR
+  leg**, 21% exact / MAE 20 with one. CUA case is negligible (5–7 periods).
+
+**Sept 2026 out-of-sample check** (fresh ladder pull, 2,880 periods): L1,
+L3, L4 100.00% exact; L2 without aFRR leg 99.8% (1 CUA). aFRR leg is
+present in 80% of periods. Proof it is unreplicable: in 395 periods aFRR
+is the *only* helping component, so the rule gives CEBśr = its
+volume-weighted 4-s average — published CEBśr equals `ceb_sr_afrr*` in
+only 0.8% of them. Step-by-step recipe: `docs/CEN_replikacja.md`.
+
+**COR from primitives (WDB 12.5): 100.00% exact, full history.**
+COR = 0 if LOLP(RO)=0 (41% of periods), else max(CORMin, CORDMax·LOLP(RO))
+(the GLC−CKOEB cap never binds). Inputs: `lolp` (b0..b9, p0..p9 per period),
+`ro-rozl.ro_cost` (RO in MW), `cordmax.cordmax_cost` (daily); CORMin
+10.00/10.50/10.82 for 2024/25/26 (CPI-indexed, read off the data). So the
+only unreplicable pieces are the aFRR 4-s weighting and CUA (7 periods in
+2.3 years).
+
+Corrections to earlier entries:
+- **F7 `pzeb_afrr{g,d}_cost` are volumes (MWh of PZEB_aFRR), not prices** —
+  the "ceb_sr/pzeb ratio 13.6" puzzle was dividing a price by a volume.
+- **F4/F7 ladder crossing used the wrong volume**: the plan covers
+  ZEB_PP (`zeb-rozl.zebpp`), not `eb-rozl` activated energy. Crossed at
+  ZEB_PP the ladder gives CKOEB exactly — that was the missing "×k".
+- **Data quality**: on 46 days (2024-09, 2025-04, 2025-11/12, …) the API
+  serves each period's bpkdbo ladder replicated k-fold (k≈9–14; a fresh
+  pull reproduces it). Plain dedup is wrong (identical bands are legit
+  elsewhere: 100% → 89%); dividing multiplicities by the per-period GCD
+  where duplication >30% restores them. `pse_bpkdbo_marginals.parquet`
+  (F4 `marg`, `g{V}` grid) is inflated on those days — rebuild before reuse.
+
+What it means for the forecaster: in the aFRR era the CEB_PP-only rule
+explains 63% of CEN variance; **53% of CEN>2,500 spikes are aFRR-driven**
+(CEB_PP-only CEN >200 PLN below actual). The domestic ladder channel is
+fully mechanical; the residual tail risk lives on PICASSO. Next: 4-s
+PICASSO CBMPs (ENTSO-E TP, token needed) to close L2, and CEN decomposed
+into (CSDAC-binding, CEB_PP, aFRR premium) as structured targets/features.
+
 ### F36. OOS storm stress-test (2026-07/08): the forecaster degrades gracefully, the tails break where expected, and volatility is a battery tailwind
 `reports/oos_storm_2026-08.json` — a live out-of-sample stress test. Re-pulled
 PSE to 08-04, rebuilt the panel, and scored models **fit on data < 2026-07-07**

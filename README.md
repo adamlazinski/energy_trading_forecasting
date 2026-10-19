@@ -50,7 +50,10 @@ revised after the fact.
 - `pl-cen-forecaster/` — all code: data layer, feature panel (leakage-honest by
   construction), models, strategy backtests, BESS stack, live collector +
   shadow forecaster (`src/`, one experiment per module, results in `reports/`).
-- `docs/` — project specs.
+- `cen-model/` — self-contained, production-ready package: CEN replication
+  (WDB rule) + structural quantile forecaster that takes your own intraday
+  data. Start with `cen-model/README.md` (Polish).
+- `docs/` — project specs; `docs/CEN_replikacja.md` = CEN replication recipe.
 
 ## Setup
 

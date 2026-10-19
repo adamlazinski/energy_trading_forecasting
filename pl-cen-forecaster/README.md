@@ -73,6 +73,8 @@ coverage 0.775 → 0.795 (`reports/postprocess_walkforward.txt`).
 | `weather_res.py` | weather-alpha gate: can weather beat the RES consensus? (F15) |
 | `res_surprise.py` | RES-surprise persistence → CEN spread signal — tradeable (F19) |
 | `signal_ensemble.py` | compose orthogonal spread signals; conviction voting (F22) |
+| `cen_reconstruct.py` | CEN rebuilt from ladder/ZEB_PP/COR/SK/CSDAC per WDB 13.2–13.3 (F37) |
+| `cen_structural.py` | SK forecast → scenarios through the WDB chain → CEN quantiles + rolling conformal (F38) |
 
 Long pulls (`pull_bpkdbo`, `pull_tge_rdb`, `pull_poeb_marginals`) are
 day-by-day, checkpointed, and safe to re-run — they skip days already in

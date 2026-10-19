@@ -1,0 +1,4 @@
+work/
+config.yaml
+my_data/
+!examples/*.csv

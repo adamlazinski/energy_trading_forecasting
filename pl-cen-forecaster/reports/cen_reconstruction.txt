@@ -1,0 +1,33 @@
+CEN reconstruction  2024-06-13 22:00:00+00:00 .. 2026-10-17 21:45:00+00:00  (82176 periods)
+
+SK sign == PSE 'contracting' label: 100.00%   (SK=0 periods: 0)
+
+L1  CEN = rule(SK, CEBsr_published, CSDAC)                     [13.1]
+    all                n= 82176  exact(<=0.01) 100.0%  <1 PLN 100.0%  MAE     0.00  P99     0.00
+    binding = CSDAC    16.1% of periods
+
+L3  CEB_PP = CKOEB + COR                                        [13.2(2)]
+    all                n= 82176  exact(<=0.01) 100.0%  <1 PLN 100.0%  MAE     0.00  P99     0.00
+    COR from LOLP(RO), CORDMax, CORMin [12.5]  n= 82176  exact(<=0.01) 100.0%  <1 PLN 100.0%  MAE     0.00  P99     0.00
+    COR constant within the day on 3.4% of days; median 10.00, range 0.00..1541.69
+
+L2  CEBsr from ZEB_PP, CEB_PP, PZEB_aFRR, CEB_aFRR             [13.3-13.6]
+    CUA+COR case (no helping activation / SK=0): 7 periods — CUA not published, left out
+    pre-aFRR  (<2025-07-11)      n= 37632  exact(<=0.01) 100.0%  <1 PLN 100.0%  MAE     0.00  P99     0.00
+    aFRR era, no aFRR leg        n=  8163  exact(<=0.01) 100.0%  <1 PLN 100.0%  MAE     0.00  P99     0.00
+    aFRR era, with aFRR leg      n= 36374  exact(<=0.01)   2.8%  <1 PLN  26.2%  MAE    26.15  P99   438.71
+    published CEBsr null before 2025-07-11: 0.0%
+
+L4  CKOEB from BPKD/BO ladder crossed at |ZEB_PP| x 4 MW       [13.2(3)-(5)]
+    ladder overlap 2024-06-14 22:00:00+00:00 .. 2026-07-05 21:45:00+00:00
+    ladder direction == sign(ZEB_PP): 100.00%
+    all                n= 70368  exact(<=0.01)  99.9%  <1 PLN  99.9%  MAE     0.28  P99     0.00
+    ZEB_PP == 0 (CKOEB = CUA, not reconstructable): 0 periods
+    ladder too short to cover ZEB_PP: 0.11%
+
+END-TO-END  CEN from ladder + ZEB_PP + LOLP/RO/CORDMax + aFRR aggregates + SK + CSDAC
+    pre-aFRR                     n= 37536  exact(<=0.01)  99.8%  <1 PLN  99.8%  MAE     0.31  P99     0.00
+    aFRR era, no aFRR leg        n=  5901  exact(<=0.01) 100.0%  <1 PLN 100.0%  MAE     0.00  P99     0.00
+    aFRR era, with aFRR leg      n= 26926  exact(<=0.01)  20.7%  <1 PLN  41.2%  MAE    19.79  P99   389.05
+    CUA periods: 5 (counted as misses below)
+    all non-CUA                  n= 70363  exact(<=0.01)  69.5%  <1 PLN  77.4%  MAE     7.74  P99   151.80
