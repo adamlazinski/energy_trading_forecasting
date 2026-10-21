@@ -4,6 +4,7 @@ Cache layout under <workdir>/raw:
   <slug>/<YYYY-MM>.parquet      15-min settlement series, ts = period START (UTC)
   cordmax/<YYYY-MM>.parquet     daily CORDMax, keyed by business_date
   ladder/<YYYY-MM-DD>.parquet   BPKD/BO plan ladder (oeb-bpkdbo), one file per day
+  offers/<YYYY-MM-DD>.parquet   all balancing offers (poeb-rbn), one file per day
 
 Closed months/days are never re-downloaded; the recent ones are refreshed,
 because PSE publishes settlement data D+1 and can correct it.
@@ -33,7 +34,8 @@ SOURCES = {
     "lolp": [f"b{i}" for i in range(10)] + [f"p{i}" for i in range(10)],
     "ro-rozl": ["ro_cost"],
 }
-LADDER_COLS = ["cdo", "ofp", "activ_direction"]
+LADDER_COLS = ["cdo", "ofc", "ofp", "activ_direction"]
+OFFER_COLS = ["ofp", "ofcg", "ofcd"]
 REFRESH_DAYS = 7          # anything this recent is always re-downloaded
 
 
@@ -131,9 +133,10 @@ def fetch_public(workdir: pathlib.Path, start: str, end: str | None = None, log=
         log(f"  {slug:11s} pobrano {got:6d} wierszy, pominięto {skipped} zamkniętych miesięcy")
 
 
-def fetch_ladder(workdir: pathlib.Path, start: str, end: str, log=print) -> None:
-    """BPKD/BO ladder day by day (10^4-10^5 rows per day; ~10 s per day)."""
-    d = workdir / "raw" / "ladder"
+def fetch_ladder(workdir: pathlib.Path, start: str, end: str, log=print, slug: str = "oeb-bpkdbo") -> None:
+    """Day-by-day ladders: oeb-bpkdbo -> raw/ladder, poeb-rbn -> raw/offers (~10 s per day)."""
+    sub, cols = ("ladder", LADDER_COLS) if slug == "oeb-bpkdbo" else ("offers", OFFER_COLS)
+    d = workdir / "raw" / sub
     d.mkdir(parents=True, exist_ok=True)
     cli = PSE()
     fresh = _today() - pd.Timedelta(days=REFRESH_DAYS)
@@ -142,13 +145,13 @@ def fetch_ladder(workdir: pathlib.Path, start: str, end: str, log=print) -> None
         f = d / f"{day:%Y-%m-%d}.parquet"
         if f.exists() and day < fresh:
             continue
-        df = cli.fetch("oeb-bpkdbo", f"{day:%Y-%m-%d}", f"{day:%Y-%m-%d}")
+        df = cli.fetch(slug, f"{day:%Y-%m-%d}", f"{day:%Y-%m-%d}")
         if df.empty:
-            log(f"  drabinka {day:%Y-%m-%d}: brak danych w API (jeszcze nieopublikowana?)")
+            log(f"  {sub} {day:%Y-%m-%d}: brak danych w API (jeszcze nieopublikowane?)")
             continue
-        df = df.assign(ts=period_start_utc(df))[["ts"] + LADDER_COLS]
+        df = df.assign(ts=period_start_utc(df))[["ts"] + [c for c in cols if c in df.columns]]
         df.to_parquet(f, index=False)
-        log(f"  drabinka {day:%Y-%m-%d}: {len(df):7d} pasm   ({i}/{len(days)})")
+        log(f"  {sub} {day:%Y-%m-%d}: {len(df):7d} wierszy   ({i}/{len(days)})")
 
 
 def read_slug(workdir: pathlib.Path, slug: str) -> pd.DataFrame:

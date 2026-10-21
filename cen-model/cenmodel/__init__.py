@@ -2,7 +2,7 @@
 
 Run `python -m cenmodel` for the list of commands.
 """
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 
 class UserError(Exception):

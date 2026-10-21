@@ -101,13 +101,28 @@ def cmd_doctor(cfg, a):
     _say("\nWszystko gotowe." if ok else "\nSą problemy — popraw je i uruchom doctor ponownie.")
 
 
+def _month_range(spec: str) -> tuple[str, str]:
+    """'RRRR-MM' or 'RRRR-MM..RRRR-MM' -> (first day, last day), capped at today."""
+    lo, _, hi = spec.partition("..")
+    try:
+        m0, m1 = pd.Period(lo, freq="M"), pd.Period(hi or lo, freq="M")
+    except ValueError:
+        raise UserError(f"Zły format miesiąca '{spec}'. Użyj RRRR-MM albo RRRR-MM..RRRR-MM.") from None
+    if m1 < m0:
+        raise UserError(f"Zakres '{spec}' jest odwrócony.")
+    end = min(m1.end_time.normalize(), pd.Timestamp.now(WAW).tz_localize(None).normalize())
+    return m0.start_time.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")
+
+
 def cmd_fetch(cfg, a):
     wd = cfg["workdir"]
-    if a.ladder:
-        m = pd.Period(a.ladder, freq="M")
-        end = min(m.end_time.normalize(), pd.Timestamp.now(WAW).tz_localize(None).normalize())
-        _say(f"Drabinka BPKD/BO {m} (dzień po dniu, ~10 s/dzień)...")
-        pse.fetch_ladder(wd, m.start_time.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"), log=_say)
+    for spec, slug, label in ((a.ladder, "oeb-bpkdbo", "Drabinka BPKD/BO (oeb-bpkdbo)"),
+                              (a.offers, "poeb-rbn", "Oferty RB (poeb-rbn)")):
+        if spec:
+            lo, hi = _month_range(spec)
+            _say(f"{label} {lo} .. {hi} (dzień po dniu, ~10 s/dzień)...")
+            pse.fetch_ladder(wd, lo, hi, log=_say, slug=slug)
+    if a.ladder or a.offers:
         return
     start = a.start or cfg["start"]
     _say(f"Pobieram dane rozliczeniowe PSE od {start} do {a.end or 'jutra'} -> {wd / 'raw'}")
@@ -335,6 +350,42 @@ def cmd_predict(cfg, a):
         _say(f"Scenariusze ({mc['n_scenarios']} na okres, przed kalibracją): {sp}")
 
 
+def cmd_ladder(cfg, a):
+    from . import ladder as L
+    wd = cfg["workdir"]
+    pub = load_public(wd, cfg["start"])
+    lo = a.start or None
+    hi = a.end or None
+    _say("Buduję krzywe cena-wolumen z drabinki BPKD/BO...")
+    c = L.build(wd, "bpkdbo", lo, hi, zeb_pp=pub.zeb_pp, log=_say)
+    rbn = None
+    if (wd / "raw" / "offers").exists() and any((wd / "raw" / "offers").glob("*.parquet")):
+        _say("Buduję krzywe z ofert poeb-rbn...")
+        rbn = L.build(wd, "rbn", lo, hi, log=_say)
+    rep = wd / "reports"
+    rep.mkdir(parents=True, exist_ok=True)
+    c.to_parquet(rep / "ladder_curves.parquet", index=False)
+    if rbn is not None:
+        rbn.to_parquet(rep / "ladder_curves_rbn.parquet", index=False)
+    lines = [f"DRABINKI  {_t(c.ts.min())} .. {_t(c.ts.max())}   siatka MW: {', '.join(map(str, L.GRID))}"]
+    if "ckoeb_hat" in c:
+        j = c.set_index("ts").join(pub.ckoeb).dropna(subset=["ckoeb_hat", "ckoeb"])
+        lines.append(f"kontrola: CKOEB z drabinki == opublikowane w {np.mean(np.abs(j.ckoeb_hat - j.ckoeb) < 0.01):.2%}"
+                     f" z {len(j)} okresów (powinno być ~100%)")
+    lines += ["", "BPKD/BO (cena CDO, kierunek aktywacji):"] + L.describe(c, pub) + L.pca_lines(c)
+    if rbn is not None:
+        lines += ["", "poeb-rbn (wszystkie oferty, oba kierunki):"] + L.describe(rbn, pub)
+    ev_lines, P = L.evaluate(c, pub, a.test_days, cfg["horizon_min"], rbn)
+    lines += ev_lines
+    if not P.empty:
+        P.to_parquet(rep / "ladder_eval.parquet", index=False)
+    _say("\n" + "\n".join(lines))
+    _write_report(cfg, "ladder.txt", lines)
+    _say(f"\nRaport: {rep / 'ladder.txt'}\nKrzywe: {rep / 'ladder_curves.parquet'}"
+         + (f", {rep / 'ladder_curves_rbn.parquet'}" if rbn is not None else "")
+         + (f"\nPrognozy krzywej: {rep / 'ladder_eval.parquet'}" if not P.empty else ""))
+
+
 def _write_report(cfg, name, lines):
     d = cfg["workdir"] / "reports"
     d.mkdir(parents=True, exist_ok=True)
@@ -351,6 +402,11 @@ Kolejność (pierwszy raz):
   6. python -m cenmodel train         trenuj model do użycia
   7. python -m cenmodel predict --refresh   prognoza na najbliższe okresy
   python -m cenmodel doctor           diagnoza, gdy coś nie działa
+
+Drabinki ofert (osobno):
+  python -m cenmodel fetch --ladder 2026-01..2026-09   drabinka BPKD/BO, dzień po dniu
+  python -m cenmodel fetch --offers 2026-01..2026-09   oferty poeb-rbn (opcjonalnie)
+  python -m cenmodel ladder                            krzywe, PCA, prognoza krzywej -> reports/ladder.txt
 """
 
 
@@ -365,7 +421,8 @@ def main(argv=None):
     f = sub.add_parser("fetch", help="pobierz/odśwież dane PSE")
     f.add_argument("--start", help="RRRR-MM-DD (domyślnie `start` z config)")
     f.add_argument("--end", help="RRRR-MM-DD (domyślnie jutro)")
-    f.add_argument("--ladder", metavar="RRRR-MM", help="zamiast tego: drabinka BPKD/BO za miesiąc")
+    f.add_argument("--ladder", metavar="RRRR-MM[..RRRR-MM]", help="zamiast tego: drabinka BPKD/BO (oeb-bpkdbo)")
+    f.add_argument("--offers", metavar="RRRR-MM[..RRRR-MM]", help="zamiast tego: wszystkie oferty RB (poeb-rbn)")
     v = sub.add_parser("verify", help="sprawdź replikację CEN z danych PSE")
     v.add_argument("--month", metavar="RRRR-MM", help="tylko ten miesiąc (+ drabinka, jeśli pobrana)")
     sub.add_parser("check-data", help="sprawdź Twoje dane (own_data)")
@@ -377,6 +434,10 @@ def main(argv=None):
                    help="dodaj wariant z idealnym SK w czasie rzeczywistym (górna granica)")
     t = sub.add_parser("train", help="trenuj model do predict")
     t.add_argument("--end", help="RRRR-MM-DD: trenuj tylko do tej daty")
+    lp = sub.add_parser("ladder", help="krzywe cena-wolumen z drabinek: opis, PCA, prognoza krzywej")
+    lp.add_argument("--start", help="RRRR-MM-DD (domyślnie cała pobrana drabinka)")
+    lp.add_argument("--end", help="RRRR-MM-DD")
+    lp.add_argument("--test-days", type=int, default=60, help="dni testu prognozy krzywej (domyślnie 60)")
     p = sub.add_parser("predict", help="prognoza kwantyli CEN")
     p.add_argument("--start", help="'RRRR-MM-DD HH:MM' czasu polskiego, początek pierwszego okresu")
     p.add_argument("--end", help="'RRRR-MM-DD HH:MM' czasu polskiego (domyślnie start + 1 h)")

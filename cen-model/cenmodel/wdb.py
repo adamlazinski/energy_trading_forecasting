@@ -53,8 +53,8 @@ def undo_api_replication(lad: pd.DataFrame, thresh: float = 0.3) -> pd.DataFrame
     """On ~46 days the API serves each period's ladder k-fold. Identical bands
     are otherwise legitimate, so plain dedup is wrong: divide each band's
     multiplicity by the per-period GCD, only where duplication is heavy."""
-    cols = ["ts", "cdo", "ofp", "activ_direction"]
-    cnt = lad.groupby(cols).size().rename("n").reset_index()
+    cols = ["ts", "cdo", "ofp", "activ_direction"] + (["ofc"] if "ofc" in lad.columns else [])
+    cnt = lad.groupby(cols, dropna=False).size().rename("n").reset_index()
     dup = 1 - cnt.groupby("ts").size() / cnt.groupby("ts").n.sum()
     gcd = cnt.groupby("ts").n.agg(lambda s: np.gcd.reduce(s.to_numpy()))
     k = gcd.where(dup > thresh, 1)

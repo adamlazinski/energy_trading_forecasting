@@ -182,10 +182,60 @@ Struktura kodu:
 
 | plik | rola |
 |---|---|
-| `cenmodel/pse.py` | klient API PSE, cache miesięczny, drabinka dzienna |
+| `cenmodel/pse.py` | klient API PSE, cache miesięczny, drabinka i oferty dziennie |
 | `cenmodel/wdb.py` | reguła CEN, COR z LOLP, CKOEB z drabinki, weryfikacja |
 | `cenmodel/panel.py` | panel 15-min, cechy publiczne bez wycieku |
 | `cenmodel/owndata.py` | wczytanie i walidacja Twoich danych, cechy na bramce |
 | `cenmodel/model.py` | model strukturalny, GBM, kalibracja, metryki |
+| `cenmodel/ladder.py` | krzywe cena–wolumen z drabinek, PCA, prognoza krzywej |
 | `cenmodel/cli.py` | komendy |
 | `tests/` | testy reguł, braku wycieku i przebiegu end-to-end na danych syntetycznych |
+
+## 8. Drabinki ofert: krzywe cena–wolumen (osobny moduł)
+
+Do badania i modelowania poziomów cen ofertowych. Każdy kwadrans i kierunek
+zamieniamy na **cenę przy stałym skumulowanym wolumenie** (25, 50, 100, …, 4000 MW,
+w porządku merit-order: G od najtańszej, D od najdroższej). Tak samo PSE wyznacza
+CKOEB (przecięcie na |ZEB_PP|×4 MW), więc pipeline sam sprawdza, czy krzywe są dobre.
+
+```bash
+python -m cenmodel fetch                              # dane rozliczeniowe (jeśli jeszcze nie)
+python -m cenmodel fetch --ladder 2025-11..2026-09    # drabinka BPKD/BO, ~10 s/dzień
+python -m cenmodel fetch --offers 2025-11..2026-09    # opcjonalnie: wszystkie oferty poeb-rbn
+python -m cenmodel ladder --test-days 60              # -> reports/ladder.txt
+```
+
+Dwa źródła:
+
+| | `oeb-bpkdbo` (`--ladder`) | `poeb-rbn` (`--offers`) |
+|---|---|---|
+| co | pasma w kierunku aktywacji, cena CDO (z korektą rozruchową) | wszystkie oferty: moc + cena G i cena D |
+| publikacja | D+1 | ~2 min po okresie |
+| rola | **cel**: krzywa, która wyznaczyła CKOEB | cecha dostępna na bramce |
+
+Raport `reports/ladder.txt`:
+
+1. **kontrola** — CKOEB z drabinki vs opublikowany (powinno być ~100%; inaczej
+   coś jest nie tak z danymi).
+2. **opis krzywych** — dla każdego punktu siatki: P10/mediana/P90, jak często drabinka
+   się kończy, autokorelacja 15 min / 24 h / 7 dni, korelacja z CSDAC; profil
+   godzinowy i miesięczny; udział korekty rozruchowej na paśmie krańcowym.
+3. **PCA** krzywej (asinh ceny) — zwykle 3 czynniki: poziom, nachylenie, ogon.
+4. **prognoza krzywej** na ostatnie `--test-days` dni: D-2 ta sama pora, mediana
+   7 dni, ostatnia krzywa rbn sprzed bramki, regresja (kalendarz + CSDAC + lagi).
+   Ocena: prognozowaną krzywą przecinamy na **rzeczywistym** wolumenie i porównujemy
+   z CKOEB — to mierzy błąd samej krzywej, bez błędu prognozy wolumenu.
+   „Wyrocznia” (prawdziwa krzywa) to błąd samej siatki, dolna granica.
+
+Pliki: `reports/ladder_curves.parquet` (ts, dir, p25…p4000, ladder_mw, p_top,
+ckoeb_hat, need_mw, startup_marginal), `ladder_curves_rbn.parquet`,
+`ladder_eval.parquet` (prognozy per okres i model). Na tym budujesz własne modele.
+
+Bez wycieku: drabinka BPKD/BO dnia D jest jawna dopiero D+1, więc jako wejście
+prognozy używana jest z opóźnieniem ≥ 2 doby; rbn z opóźnieniem
+⌈(H+20)/15⌉ kwadransów (H = `horizon_min`).
+
+Wyniki na 11.2025–07.2026 (test 05–07.2026, kierunek G, MAE przy rzeczywistym
+wolumenie): mediana 7 dni **75 zł**, regresja 78, D-2 90, rbn wprost 201, wyrocznia 6.
+Krzywa rbn ma inny poziom niż BPKD/BO (najpewniej zawiera pasma, których przy bieżącym grafiku
+nie da się aktywować), więc wprost się nie nadaje — co najwyżej jako cecha.
